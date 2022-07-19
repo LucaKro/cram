@@ -119,28 +119,28 @@
                  (left-poses ?left-grasp-poses)
                  (right-poses ?right-grasp-poses)
                  (goal ?goal)))))
-  (let ((?goal `(cpoe:object-in-hand ,?object-designator ,?arm)))
-    (roslisp:ros-info (pick-place pick-up) "Gripping")
-    (when (member :left ?arm)
-      (exe:perform
-       (desig:an action
-                 (type gripping)
-                 (gripper :left)
-                 (effort ?grip-effort)
-                 (object ?object-designator)
-                 (desig:when ?left-grasp
-                   (grasp ?left-grasp))
-                 (goal ?goal))))
-    (when (member :right ?arm)
-      (exe:perform
-       (desig:an action
-                 (type gripping)
-                 (gripper :right)
-                 (effort ?grip-effort)
-                 (object ?object-designator)
-                 (desig:when ?right-grasp
-                   (grasp ?right-grasp))
-                 (goal ?goal)))))
+  ;; (let ((?goal `(cpoe:object-in-hand ,?object-designator ,?arm)))
+  ;;   (roslisp:ros-info (pick-place pick-up) "Gripping")
+  ;;   (when (member :left ?arm)
+  ;;     (exe:perform
+  ;;      (desig:an action
+  ;;                (type gripping)
+  ;;                (gripper :left)
+  ;;                (effort ?grip-effort)
+  ;;                (object ?object-designator)
+  ;;                (desig:when ?left-grasp
+  ;;                  (grasp ?left-grasp))
+  ;;                (goal ?goal))))
+  ;;   (when (member :right ?arm)
+  ;;     (exe:perform
+  ;;      (desig:an action
+  ;;                (type gripping)
+  ;;                (gripper :right)
+  ;;                (effort ?grip-effort)
+  ;;                (object ?object-designator)
+  ;;                (desig:when ?right-grasp
+  ;;                  (grasp ?right-grasp))
+  ;;                (goal ?goal)))))
   (unless ?holding
    (roslisp:ros-info (pick-place pick-up) "Lifting")
    (cpl:pursue

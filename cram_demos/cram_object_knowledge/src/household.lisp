@@ -50,6 +50,8 @@
   (<- (man-int:object-type-direct-subtype :cutlery :big-knife))
   (<- (man-int:object-type-direct-subtype :cutlery :fork))
   (<- (man-int:object-type-direct-subtype :cutlery :spoon))
+  (<- (man-int:object-type-direct-subtype :milk :cap))
+
 
   (<- (man-int:object-type-direct-subtype :cereal :breakfast-cereal)))
 
@@ -315,9 +317,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; milk ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defparameter *milk-grasp-xy-offset* 0.01 "in meters")
-(defparameter *milk-grasp-z-offset* 0.03 "in meters")
+(defparameter *milk-grasp-z-offset* -0.03 "in meters")
 (defparameter *milk-pregrasp-xy-offset* 0.15 "in meters")
 (defparameter *milk-lift-z-offset* 0.15 "in meters")
+(defparameter *milk-top-grasp-x-offset* 0.00 "in meters")
+;; (defparameter *cup-eco-orange-top-grasp-z-offset* 0.02 "in meters")
+(defparameter *milk-top-grasp-z-offset* 0.1 "in meters")
+
 
 ;; BACK grasp
 (man-int:def-object-type-to-gripper-transforms :milk '(:left :right) :back
@@ -353,6 +359,50 @@
   :2nd-pregrasp-offsets `(0.0 ,(- *milk-pregrasp-xy-offset*) 0.0)
   :lift-translation `(0.0 0.0 ,*milk-lift-z-offset*)
   :2nd-lift-translation `(0.0 0.0 ,*milk-lift-z-offset*))
+
+;; TOP grasp
+(man-int:def-object-type-to-gripper-transforms :milk '(:left :right) :top
+  :grasp-translation `(,(- *milk-top-grasp-x-offset*) 0.0d0 ,*milk-top-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
+  :pregrasp-offsets *lift-offset*
+  :2nd-pregrasp-offsets *lift-offset*
+  :lift-translation *lift-offset*
+  :2nd-lift-translation *lift-offset*)
+
+;; TOP grasp
+(man-int:def-object-type-to-gripper-transforms :cap '(:left :right) :top
+  :grasp-translation `(,(- *milk-top-grasp-x-offset*) 0.0d0 ,*milk-top-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
+  :pregrasp-offsets *lift-offset*
+  :2nd-pregrasp-offsets *lift-offset*
+  :lift-translation *lift-offset*
+  :2nd-lift-translation *lift-offset*)
+
+;; (man-int:def-object-type-to-gripper-transforms :milk '(:left :right) :front
+;;   :grasp-translation `(,(- *milk-top-grasp-x-offset*) 0.0d0 ,*milk-top-grasp-z-offset*)
+;;   :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
+;;   :pregrasp-offsets *lift-offset*
+;;   :2nd-pregrasp-offsets *lift-offset*
+;;   :lift-translation *lift-offset*
+;;   :2nd-lift-translation *lift-offset*)
+
+;; ;; TOP grasp
+;; (man-int:def-object-type-to-gripper-transforms :milk '(:left :right) :left-side
+;;   :grasp-translation `(,(- *milk-top-grasp-x-offset*) 0.0d0 ,*milk-top-grasp-z-offset*)
+;;   :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
+;;   :pregrasp-offsets *lift-offset*
+;;   :2nd-pregrasp-offsets *lift-offset*
+;;   :lift-translation *lift-offset*
+;;   :2nd-lift-translation *lift-offset*)
+
+;; (man-int:def-object-type-to-gripper-transforms :milk '(:left :right) :right-side
+;;   :grasp-translation `(,(- *milk-top-grasp-x-offset*) 0.0d0 ,*milk-top-grasp-z-offset*)
+;;   :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
+;;   :pregrasp-offsets *lift-offset*
+;;   :2nd-pregrasp-offsets *lift-offset*
+;;   :lift-translation *lift-offset*
+;;   :2nd-lift-translation *lift-offset*)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; cereal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
