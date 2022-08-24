@@ -693,7 +693,7 @@ with the given offsets (the offsets are specified in the torso frame).
               (when (and *be-strict-with-collisions*
                          (btr:robot-colliding-objects-without-attached))
                 (make-instance 'common-fail:manipulation-goal-not-reached
-                  :description "Robot is in collision with environment.")))
+                  :description "Robot is in collision with environment. (allow attached)")))
              ((or :allow-hand
                   :allow-fingers
                   :allow-arm)
@@ -746,7 +746,7 @@ with the given offsets (the offsets are specified in the torso frame).
                                   '(rob-int:arm-links ?robot :right ?links)))))))))
                       :test #'string-equal))
                 (make-instance 'common-fail:manipulation-goal-not-reached
-                  :description "Robot is in collision with environment.")))
+                  :description "Robot is in collision with environment. (allow partial)")))
              (:avoid-all
               ;; avoid-all means the robot is not colliding with anything except the
               ;; objects it is holding, and the object it is holding
@@ -756,7 +756,7 @@ with the given offsets (the offsets are specified in the torso frame).
                         (remove object-name-to-allow-collisions-with
                                 (btr:robot-attached-objects-in-collision)))
                 (make-instance 'common-fail:manipulation-goal-not-reached
-                  :description "Robot is in collision with environment."))))))
+                  :description "Robot is in collision with environment. (avoid all)"))))))
 
     (unless collision-mode
       (setf collision-mode :avoid-all))
@@ -781,6 +781,10 @@ with the given offsets (the offsets are specified in the torso frame).
 
 (defun move-joints (left-configuration right-configuration)
   (declare (type list left-configuration right-configuration))
+  (print "----------printing left-configuration")
+  (print left-configuration)
+  (print "----------printing right-configuration")
+  (print right-configuration)
   (flet ((set-configuration (arm joint-values)
            (when joint-values
              (let ((joint-name-value-list
@@ -814,7 +818,7 @@ with the given offsets (the offsets are specified in the torso frame).
                                                    (car joint-name-and-value)))
                                 joint-name-value-list))
                       (goal-joint-state
-                        (mapcar #'second joint-name-value-list)))
+		       (mapcar #'second joint-name-value-list)))
                  (unless (cram-tf:values-converged
                           (cram-tf:normalize-joint-angles current-joint-state)
                           (cram-tf:normalize-joint-angles goal-joint-state)
@@ -1069,12 +1073,22 @@ collision by moving its torso and base"
                  left-tcp-pose right-tcp-pose)
            (type boolean move-base))
   (declare (ignore collision-object-b collision-object-b-link collision-object-a))
-
+  (print "<<<<<<<<<<<<<<<<<Printing left tcp pose")
+  (print left-tcp-pose)
+  (print "<<<<<<<<<<<<<<<<<Printing right tcp pose")
+  (print right-tcp-pose)
   (cram-tf:visualize-marker (list left-tcp-pose right-tcp-pose) :r-g-b-list '(1 0 1))
   (when right-tcp-pose
     (btr:add-vis-axis-object right-tcp-pose))
+    ;;(setf right-tcp-pose (demo::get-tilting-poses :right-side (list right-tcp-pose))))
   (when left-tcp-pose
     (btr:add-vis-axis-object left-tcp-pose))
+   ;; (setf left-tcp-pose (demo::get-tilting-poses :right-side (list right-tcp-pose))))
+  (print "<<<<<<<<<<<<<<<<<Printing left tcp pose2")
+  (print left-tcp-pose)
+  (print "<<<<<<<<<<<<<<<<<Printing right tcp pose2")
+  (print right-tcp-pose)
+   
   (cut:with-vars-strictly-bound (?robot
                                  ?left-tool-frame ?right-tool-frame
                                  ?left-ee-frame ?right-ee-frame
@@ -1125,7 +1139,7 @@ collision by moving its torso and base"
                         "pr2_right_arm_kinematics/get_ik"
                         "kdl_ik_service/get_ik")))
               (get-ik-joint-positions
-               (ee-pose-in-map->ee-pose-in-torso
+              (ee-pose-in-map->ee-pose-in-torso
                 (tcp-pose->ee-pose right-tcp-pose ?right-tool-frame ?right-ee-frame))
                ?torso-link ?right-ee-frame ?right-arm-joints
                ?torso-joint ?lower-limit ?upper-limit
@@ -1158,6 +1172,10 @@ collision by moving its torso and base"
             (right-base-pose
              (setf (btr:pose (btr:get-robot-object)) right-base-pose)))
           ;; set the arm joints to inferred position
+           (print "<<<<<<<<<<<<<<<<<Printing left-ik")
+          (print left-ik)
+           (print "<<<<<<<<<<<<<<<<<Printing right-ik")
+          (print right-ik)
           (move-joints left-ik right-ik)
           ;; perform one last collision check
           (perform-collision-check collision-mode left-tcp-pose right-tcp-pose))))))
@@ -1221,3 +1239,100 @@ collision by moving its torso and base"
    (when robot-transform
      (setf (btr:link-pose (btr:get-robot-object) root-link)
            (cl-transforms:transform->pose robot-transform)))))
+
+
+
+
+(defun move-joints-test (left-configuration right-configuration)
+  (declare (type list left-configuration right-configuration))
+  (flet ((set-configuration (arm joint-values)
+           (when joint-values
+             (let ((joint-name-value-list
+                     (if (listp (car joint-values))
+                         joint-values
+                         (let ((joint-names
+                                 (cut:var-value
+                                  '?joints
+                                  (car (prolog:prolog
+                                        `(and (rob-int:robot ?robot)
+                                              (rob-int:arm-joints ?robot ,arm
+                                                                  ?joints)))))))
+                           (unless (= (length joint-values) (length joint-names))
+                             (error "[PROJECTION MOVE-JOINTS] length of joints list ~
+                                     is incorrect"))
+                           (mapcar (lambda (name value)
+                                     (list name (* value 1.0d0)))
+                                   joint-names joint-values)))))
+               (assert
+                (prolog:prolog
+                 `(and
+                   (btr:bullet-world ?world)
+                   (rob-int:robot ?robot)
+                   (assert ?world (btr:joint-state ?robot ,joint-name-value-list)))))
+               ;; check if joint state was indeed reached
+               (let* ((robot-object
+                        (btr:get-robot-object))
+                      (current-joint-state
+                        (mapcar (lambda (joint-name-and-value)
+                                  (btr:joint-state robot-object
+                                                   (car joint-name-and-value)))
+                                joint-name-value-list))
+                      (goal-joint-state
+		       (mapcar #'second joint-name-value-list)))
+                 (unless (cram-tf:values-converged
+                          (cram-tf:normalize-joint-angles current-joint-state)
+                          (cram-tf:normalize-joint-angles goal-joint-state)
+                          *projection-convergence-delta-joint*)
+                   (cpl:fail 'common-fail:manipulation-goal-not-reached
+                             :description
+                             (format nil
+                                     "Projection did not converge to goal:~%~
+                                     ~a (~a)~%should have been at~%~a~%~
+                                     with delta-joint of ~a."
+                                     arm
+                                     (cram-tf:normalize-joint-angles
+                                      current-joint-state)
+                                     (cram-tf:normalize-joint-angles
+                                      goal-joint-state)
+                                     *projection-convergence-delta-joint*))))))))
+    (set-configuration :left left-configuration)
+    (set-configuration :right right-configuration)))
+
+
+
+(defun rotate-wrist (l-config r-config times)
+  (let ((l-rotation (calc-rotation l-config times))
+        (r-rotation (calc-rotation r-config times)))
+    (declare (type list l-rotation)
+             (type list r-rotation))
+    ;; (print (list r-config))
+    ;; (print r-rotation)
+    (cond
+      (l-rotation 
+       (mapcar #'(lambda (x)
+                   (sleep 0.1)
+                   (move-joints-test x nil))
+               l-rotation))
+      (r-rotation 
+       (mapcar #'(lambda (x)
+                   (sleep 0.1)
+                   (move-joints-test nil x))
+               r-rotation)))
+    
+    ;; (mapcar #'move-joints
+    ;;         l-rotation
+    ;;         r-rotation
+    ;;         ;; (list l-config)
+    ;;         ;; (list r-config)
+    ))
+
+(defun calc-rotation (config times)
+  (let ((rev (reverse config))
+        (result nil))
+    (when config
+      (dotimes (n times)
+        (push (reverse (push (+ 0.1 (pop rev)) rev)) result)))
+    (reverse result)))
+        
+        
+

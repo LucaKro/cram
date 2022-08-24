@@ -99,10 +99,11 @@
       (let ((?goal `(cpoe:tool-frames-at ,?left-reach-poses ,?right-reach-poses)))
         (exe:perform
          (desig:an action
-                   (type reaching)
+                   (type reaching-bottle)
                    (object ?object-designator)
                    (left-poses ?left-reach-poses)
                    (right-poses ?right-reach-poses)
+                   (move-base nil)
                    (goal ?goal))))))
   (roslisp:ros-info (pick-place pick-up) "Grasping")
   (cpl:with-failure-handling

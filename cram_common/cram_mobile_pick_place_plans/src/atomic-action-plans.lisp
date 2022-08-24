@@ -325,7 +325,6 @@ With a continuous motion planner one could have fluent arch trajectories etc.
            (type (or number null) ?effort))
   "Perform GRIPPING motion and retries once, otherwise propagate failure up.
 In any case, issue ROBOT-STATE-CHANGED event."
-
   (unwind-protect
        (cpl:with-retry-counters ((grasping-retries 1))
          (cpl:with-failure-handling

@@ -143,7 +143,9 @@
                                     (random
                                      nil)
                                     (list-of-objects
-                                     '(:bowl :spoon :cup :milk :breakfast-cereal)))
+                                     '(;; :bowl :spoon :cup
+                                       :milk ;; :breakfast-cereal
+                                       )))
 
   (initialize)
   (when cram-projection:*projection-environment*
@@ -184,12 +186,16 @@
                    ;;   (arms (?arm-to-use)))
                    )))
 
-      ;; (setf proj-reasoning::*projection-reasoning-enabled* nil)
+
+     ;;
+      ;;(get-tilting-poses grasp (list approach-pose))
+        
+       ;; (setf proj-reasoning::*projection-reasoning-enabled* nil)
       ))
 
   ;; (setf proj-reasoning::*projection-reasoning-enabled* nil)
 
-  (park-robot)
+  ;;(park-robot)
 
   (finalize)
 

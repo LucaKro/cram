@@ -293,8 +293,10 @@
     (spec:property ?current-object-desig (:type ?object-type))
     (spec:property ?current-object-desig (:name ?object-name))
 
+    (equal ?object-type-bottle :milkbottle) 
+    
     ;; get the arm for grasping by checking if it is specified for ?object-type
-    (man-int:arms-for-object-type ?object-type ?arms-for-object)
+    (man-int:arms-for-object-type ?object-type-bottle ?arms-for-object)
     (-> (equal ?arms-for-object nil)
         (-> (spec:property ?action-designator (:arm ?arm))
             (and (setof ?free-arm (man-int:robot-free-hand ?_ ?free-arm) ?free-arms)
@@ -304,9 +306,9 @@
         (-> (spec:property ?action-designator (:arm ?arm))
             (and (setof ?free-arm (man-int:robot-free-hand ?_ ?free-arm) ?free-arms)
                  (subset ?arm ?free-arms)
-                 (man-int:check-arms-for-object-type ?arm ?object-type))
+                 (man-int:check-arms-for-object-type ?arm ?object-type-bottle))
             (and (setof ?free-arm (man-int:robot-free-hand ?_ ?free-arm) ?free-arms)
-                 (man-int:check-arms-for-object-type ?free-arms ?object-type)
+                 (man-int:check-arms-for-object-type ?free-arms ?object-type-bottle)
                  (equal ?arm ?free-arms))))
                  
     (lisp-fun man-int:get-object-transform ?current-object-desig ?object-transform)
@@ -327,14 +329,15 @@
               (equal ?location-type NIL)))
 
     ;; calculate trajectory with given grasps
-    (lisp-fun man-int:get-action-grasps ?object-type ?arm ?object-transform ?grasps)    
+    (lisp-fun man-int:get-action-grasps ?object-type-bottle ?arm ?object-transform ?grasps)    
     (equal ?objects (?current-object-desig))
     (-> (member :left ?arm)
         (and (-> (spec:property ?action-designator (:left-grasp ?left-grasp))
                  (true)
                  (member ?left-grasp ?grasps))
              (lisp-fun man-int:get-action-trajectory :picking-up :left
-                       :left-side ;;?left-grasp
+                       ;;:left-side
+                       ?left-grasp
                        ?location-type ?objects
                        ?left-trajectory)
              (lisp-fun man-int:get-traj-poses-by-label ?left-trajectory :reaching
@@ -353,7 +356,8 @@
                   (true)
                   (member ?right-grasp ?grasps))
               (lisp-fun man-int:get-action-trajectory :picking-up :right
-                        :right-side ;;?right-grasp
+                        ;;:right-side
+                        ?right-grasp
                         ?location-type ?objects
                         ?right-trajectory)
              (lisp-fun man-int:get-traj-poses-by-label ?right-trajectory :reaching

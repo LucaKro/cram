@@ -291,56 +291,10 @@
             `((,approach-pose)
               ,tilting-poses))))
 
-
-(defmethod man-int:get-action-trajectory :heuristics 20 ((action-type (eql :removing-cap))
-                                                 arm
-                                                 grasp
-                                                 location
-                                                 objects-acted-on
-                                                 &key)
-  (let* ((object
-           (car objects-acted-on))
-         (object-name
-           (desig:desig-prop-value object :name))
-         (object-type
-           (desig:desig-prop-value object :type))
-         (oTg-std
-           (man-int:get-object-type-to-gripper-transform
-            object-type object-name arm grasp))
-         (bTo
-           (man-int:get-object-transform object))
-         (oTb
-           (cram-tf:transform-stamped-inv bTo))
-         (bTb-lifts
-           (man-int:get-object-type-wrt-base-frame-lift-transforms
-            object-type arm grasp location))
-         (oTg-lifts
-           (mapcar (lambda (btb-lift)
-                     (reduce #'cram-tf:apply-transform
-                             `(,oTb ,bTb-lift ,bTo ,oTg-std)
-                             :from-end T))
-                   bTb-lifts))
-         (oTg-pregrasps
-           (man-int:get-object-type-to-gripper-pregrasp-transforms
-            object-type object-name arm grasp location oTg-std)))
-
-    (mapcar (lambda (label transforms)
-              (man-int:make-traj-segment
-               :label label
-               :poses (mapcar (alexandria:curry #'man-int:calculate-gripper-pose-in-map bTo arm)
-                              transforms)))
-            '(:reaching
-              :grasping
-              :lifting)
-            `(,oTg-pregrasps
-              (,oTg-std)
-              ,oTg-lifts))))
-
-
 ;;get pouring trajectory workes like picking-up it will get the 
 ;;object-type-to-gripper-tilt-approch-transform und makes a traj-segment out of it
 ;;here we have only the approach pose, followed by that is the titing pose (above)
-(defmethod man-int:get-action-trajectory :heuristics 20 ((action-type (eql :screwing-open))
+(defmethod man-int:get-action-trajectory :heuristics 20 ((action-type (eql :openbottle))
                                                          arm
                                                          grasp
                                                          location
@@ -383,7 +337,29 @@
               arm oTg-std)
             :orientation 
             (cl-tf:rotation bTb-offset)))
-          
+            ;; (cl-tf:q+
+            ;;  (cl-tf:q-
+            ;;   (cl-tf:orientation (btr:pose (btr:get-robot-object)))
+            ;;   (cl-tf:rotation
+            ;;    (cram-tf:apply-transform
+            ;;     (cl-tf:make-transform-stamped
+            ;;      cram-tf:*robot-base-frame*
+            ;;      cram-tf:*robot-base-frame*
+            ;;      0.0
+            ;;      (cl-tf:make-identity-vector)
+            ;;      (cl-tf:rotation (cl-tf:transform-inv bTo)))
+            ;;     (cl-tf:make-transform-stamped
+            ;;      cram-tf:*robot-base-frame*
+            ;;      cram-tf:*robot-base-frame*
+            ;;      0.0
+            ;;      (cl-tf:make-identity-vector)
+            ;;      (cl-tf:orientation (btr:pose
+            ;;                          (btr:get-robot-object)))))))
+            ;;  (case grasp
+            ;;    (:FRONT (cl-tf:euler->quaternion :az 0.0))
+            ;;    (:BACK (cl-tf:euler->quaternion :az pi))
+            ;;    (:LEFT-SIDE (cl-tf:euler->quaternion :az (- (/ pi 2))))
+            ;;    (:RIGHT-SIDE (cl-tf:euler->quaternion :az (/ pi 2)))))))
          (tilting-poses
            (get-tilting-poses grasp (list approach-pose))))
     (mapcar (lambda (label poses-in-base)
@@ -407,54 +383,3 @@
               :tilting)
             `((,approach-pose)
               ,tilting-poses))))
-
-
-(defmethod man-int:get-action-trajectory :heuristics 20 ((action-type (eql :removing-cap2))
-                                                 arm
-                                                 grasp
-                                                 location
-                                                 objects-acted-on
-                                                 &key)
-  (let* ((object
-           (car objects-acted-on))
-         (object-name
-           (desig:desig-prop-value object :name))
-         (object-type
-           (desig:desig-prop-value object :type))
-         (oTg-std
-           (man-int:get-object-type-to-gripper-transform
-            ;; object-type
-            :cap
-            object-name arm grasp))
-         (bTo
-           (man-int:get-object-transform object))
-         (oTb
-           (cram-tf:transform-stamped-inv bTo))
-         (bTb-lifts
-           (man-int:get-object-type-wrt-base-frame-lift-transforms
-            ;; object-type
-            :cap
-            arm grasp location))
-         (oTg-lifts
-           (mapcar (lambda (btb-lift)
-                     (reduce #'cram-tf:apply-transform
-                             `(,oTb ,bTb-lift ,bTo ,oTg-std)
-                             :from-end T))
-                   bTb-lifts))
-         (oTg-pregrasps
-           (man-int:get-object-type-to-gripper-pregrasp-transforms
-            ;; object-type
-            :cap
-            object-name arm grasp location oTg-std)))
-
-    (mapcar (lambda (label transforms)
-              (man-int:make-traj-segment
-               :label label
-               :poses (mapcar (alexandria:curry #'man-int:calculate-gripper-pose-in-map bTo arm)
-                              transforms)))
-            '(:reaching
-              :grasping
-              :lifting)
-            `(,oTg-pregrasps
-              (,oTg-std)
-              ,oTg-lifts))))

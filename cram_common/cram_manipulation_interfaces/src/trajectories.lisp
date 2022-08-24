@@ -360,14 +360,18 @@ Depending on the `location', different lifting trajectories can be defined.")
            (desig:desig-prop-value object :type))
          (oTg-std
            (get-object-type-to-gripper-transform
-            object-type object-name arm grasp))
+            ;;object-type
+            :milkbottle
+            object-name arm grasp))
          (bTo
            (man-int:get-object-transform object))
          (oTb
            (cram-tf:transform-stamped-inv bTo))
          (bTb-lifts
            (get-object-type-wrt-base-frame-lift-transforms
-            object-type arm grasp location))
+            ;;object-type
+            :milkbottle
+            arm grasp location))
          (oTg-lifts
            (mapcar (lambda (btb-lift)
                      (reduce #'cram-tf:apply-transform
@@ -376,7 +380,9 @@ Depending on the `location', different lifting trajectories can be defined.")
                    bTb-lifts))
          (oTg-pregrasps
            (get-object-type-to-gripper-pregrasp-transforms
-            object-type object-name arm grasp location oTg-std)))
+            ;;object-type
+            :milkbottle
+            object-name arm grasp location oTg-std)))
 
     (mapcar (lambda (label transforms)
               (make-traj-segment

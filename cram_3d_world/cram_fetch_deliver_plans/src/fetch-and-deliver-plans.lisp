@@ -463,22 +463,24 @@ and using the grasp and arm specified in `pick-up-action' (if not NIL)."
                                                   referenced-action-desig
                                                   :grasp)))
                                           (desig:an action
-                                                    (type picking-up)
+                                                    (type holding)
                                                     (arm ?arm)
                                                     (grasp ?grasp)
                                                     (object
                                                      ?more-precise-perceived-object-desig)
-                                                    (goal ?goal))))
+                                                    ;; (goal ?goal)
+                                                    )))
                                       (desig:an action
-                                                (type picking-up)
+                                                (type holding)
                                                 (desig:when ?arm
                                                   (arm ?arm))
                                                 (desig:when ?grasp
                                                   (grasp ?grasp))
                                                 (object
                                                  ?more-precise-perceived-object-desig)
-                                                (goal ?goal)))))
-                            
+                                                ;; (goal ?goal)
+                                                ))))
+                          
                             (setf pick-up-action (desig:current-desig pick-up-action))
                             (proj-reasoning:check-picking-up-collisions pick-up-action)
                             (setf pick-up-action (desig:current-desig pick-up-action))
@@ -689,18 +691,19 @@ If a failure happens, try a different `?target-location' or `?target-robot-locat
                     ((:deliver-location ?delivering-location))
                     ((:deliver-robot-location ?deliver-robot-location))
                   &allow-other-keys)
-  ;; if we are not sure about the exact location of deliver-location, find it
-  (let ((?goal `(man-int:location-certain ,?delivering-location)))
-    (exe:perform (desig:an action
-                           (type searching)
-                           (location ?delivering-location)
-                           (goal ?goal))))
-  ;; if deliver-location is inside a container, open the container
-  (let ((?goal `(cpoe:location-accessible ,?delivering-location)))
-    (exe:perform (desig:an action
-                           (type accessing)
-                           (location ?delivering-location)
-                           (goal ?goal))))
+
+  ;; ;; if we are not sure about the exact location of deliver-location, find it
+  ;; (let ((?goal `(man-int:location-certain ,?delivering-location)))
+  ;;   (exe:perform (desig:an action
+  ;;                          (type searching)
+  ;;                          (location ?delivering-location)
+  ;;                          (goal ?goal))))
+  ;; ;; if deliver-location is inside a container, open the container
+  ;; (let ((?goal `(cpoe:location-accessible ,?delivering-location)))
+  ;;   (exe:perform (desig:an action
+  ;;                          (type accessing)
+  ;;                          (location ?delivering-location)
+  ;;                          (goal ?goal))))
 
   ;; if we are not sure about the exact location of search-location, find it
   (let ((?goal `(man-int:location-certain ,?search-location)))
@@ -761,27 +764,28 @@ If a failure happens, try a different `?target-location' or `?target-robot-locat
       (setf ?object-designator (desig:current-desig ?object-designator))
       (roslisp:ros-info (pp-plans transport) "Fetched the object.")
 
-      (cpl:with-failure-handling
-          ((common-fail:delivering-failed (e)
-             (declare (ignore e))
-             ;; (return)
-             (drop-at-sink)))
+      ;; (cpl:with-failure-handling
+      ;;     ((common-fail:delivering-failed (e)
+      ;;        (declare (ignore e))
+      ;;        ;; (return)
+      ;;        (drop-at-sink)))
 
-        ;; deliver at destination
-        (let ((?goal
-                `(cpoe:object-at-location
-                  ,?object-designator ,?delivering-location)))
-          (exe:perform (desig:an action
-                                 (type delivering)
-                                 ;; (desig:when ?arm
-                                 ;;   (arm ?arm))
-                                 (object ?object-designator)
-                                 (context ?context)
-                                 (target ?delivering-location)
-                                 (desig:when ?deliver-robot-location
-                                   (robot-location ?deliver-robot-location))
-                                 (place-action ?deliver-place-action)
-                                 (goal ?goal)))))))
+      ;;   ;; deliver at destination
+      ;;   (let ((?goal
+      ;;           `(cpoe:object-at-location
+      ;;             ,?object-designator ,?delivering-location)))
+      ;;     (exe:perform (desig:an action
+      ;;                            (type delivering)
+      ;;                            ;; (desig:when ?arm
+      ;;                            ;;   (arm ?arm))
+      ;;                            (object ?object-designator)
+      ;;                            (context ?context)
+      ;;                            (target ?delivering-location)
+      ;;                            (desig:when ?deliver-robot-location
+      ;;                              (robot-location ?deliver-robot-location))
+      ;;                            (place-action ?deliver-place-action)
+      ;;                            (goal ?goal)))))
+      ))
 
   ;; reset the fetch location
   (let ((?goal `(cpoe:location-reset ,?search-location)))

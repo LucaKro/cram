@@ -266,8 +266,8 @@
                       ?resolved-action-designator))
 
 
-  (<- (desig:action-grounding ?action-designator (pick-up2 ?resolved-action-designator))
-    (spec:property ?action-designator (:type :holding2))
+  (<- (desig:action-grounding ?action-designator (grab-bottle ?resolved-action-designator))
+    (spec:property ?action-designator (:type :grabbing-bottle))
 
     ;; extract info from ?action-designator
     (spec:property ?action-designator (:object ?object-designator))
@@ -275,8 +275,11 @@
     (spec:property ?current-object-desig (:type ?object-type))
     (spec:property ?current-object-desig (:name ?object-name))
 
+    (equal ?object-type-cap :cap)
+    (equal ?object-type-bottle :milkbottle) 
+    
     ;; get the arm for grasping by checking if it is specified for ?object-type
-    (man-int:arms-for-object-type ?object-type ?arms-for-object)
+    (man-int:arms-for-object-type ?object-type-cap ?arms-for-object)
     (-> (equal ?arms-for-object nil)
         (-> (spec:property ?action-designator (:arm ?arm))
             (and (setof ?free-arm (man-int:robot-free-hand ?_ ?free-arm) ?free-arms)
@@ -286,11 +289,11 @@
         (-> (spec:property ?action-designator (:arm ?arm))
             (and (setof ?free-arm (man-int:robot-free-hand ?_ ?free-arm) ?free-arms)
                  (subset ?arm ?free-arms)
-                 (man-int:check-arms-for-object-type ?arm ?object-type))
+                 (man-int:check-arms-for-object-type ?arm ?object-type-cap))
             (and (setof ?free-arm (man-int:robot-free-hand ?_ ?free-arm) ?free-arms)
-                 (man-int:check-arms-for-object-type ?free-arms ?object-type)
+                 (man-int:check-arms-for-object-type ?free-arms ?object-type-cap)
                  (equal ?arm ?free-arms))))
-(lisp-fun man-int:get-object-transform ?current-object-desig ?object-transform)
+    (lisp-fun man-int:get-object-transform ?current-object-desig ?object-transform)
     ;; infer missing information like ?grasp type, gripping ?maximum-effort, manipulation poses
     (lisp-fun man-int:calculate-object-faces ?object-transform (?facing-robot-face ?bottom-face))
     (-> (man-int:object-rotationally-symmetric ?object-type)
@@ -307,15 +310,20 @@
                    (spec:property ?curr-obj-loc-obj (:type ?location-type)))
               (equal ?location-type NIL)))
 
+    (equal ?arm-bottle (:left))
+
+    (equal ?arm-cap (:right))
+
     ;; calculate trajectory with given grasps
-    (lisp-fun man-int:get-action-grasps ?object-type ?arm ?object-transform ?grasps)    
+    (lisp-fun man-int:get-action-grasps ?object-type-bottle ?arm ?object-transform ?grasps)
+    
     (equal ?objects (?current-object-desig))
-    (-> (member :left ?arm)
+    (-> (member :left ?arm-bottle)
         (and (-> (spec:property ?action-designator (:left-grasp ?left-grasp))
                  (true)
                  (member ?left-grasp ?grasps))
-             (lisp-fun man-int:get-action-trajectory :removing-cap2 :left
-                       :top ?location-type ?objects
+             (lisp-fun man-int:get-action-trajectory :picking-up :left
+                       ?left-grasp ?location-type ?objects
                        ?left-trajectory)
              (lisp-fun man-int:get-traj-poses-by-label ?left-trajectory :reaching
                        ?left-reach-poses)
@@ -328,7 +336,7 @@
              (equal ?left-grasp-poses NIL)
              (equal ?left-lift-poses NIL)))
 
-    (-> (member :right ?arm)
+    (-> (member :right ?arm-cap)
         (and  (-> (spec:property ?action-designator (:right-grasp ?right-grasp))
                   (true)
                   (member ?right-grasp ?grasps))
@@ -354,7 +362,7 @@
         (equal ?right-grasp-poses (?look-pose . ?_)))
 
     ;; put together resulting action designator
-    (desig:designator :action ((:type :holding2)
+    (desig:designator :action ((:type :grabbing-bottle)
                                (:object ?current-object-desig)
                                (:arm ?arm)
                                (:gripper-opening ?gripper-opening)
@@ -372,7 +380,6 @@
                                (:hold :holding))
                       ?resolved-action-designator))
 
-  
 
 
   (<- (desig:action-grounding ?action-designator (screw-open ?resolved-action-designator))
@@ -512,9 +519,9 @@
                                (desig:when ?arms
                                  (arms ?arms))
                                ;; (arms (list :right))
-                               ;; (desig:when ?grasps
-                               ;;   (grasps ?grasps))
-                               (grasps (list :right-side))
+                               (desig:when ?grasps
+                                 (grasps ?grasps))
+                               ;; (grasps (list :right-side))
                                (object ?object-designator)
                                (desig:when ?open-bottle-robot-location
                                  (robot-location ?open-bottle-robot-location))
@@ -714,41 +721,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                                      :left-or-right))
                                  (?other-arm (cond
                                                ((member :left ?arm) (list :right))
-                                               (T (list :left))))
-                                 (pick-up-action
-                                 ;; (remove-cap-action
-                                  ;; if remove-cap-action already exists,
-                                  ;; use its params for removing cap
-                                  (or (when pick-up-action
-                                        (let* ((referenced-action-desig
-                                                 (desig:reference pick-up-action))
-                                               (?arm
-                                                 (list (desig:desig-prop-value
-                                                        referenced-action-desig
-                                                        :arm)))
-                                               (?grasp
-                                                 (desig:desig-prop-value
-                                                  referenced-action-desig
-                                                  :grasp)))
-                                          (desig:an action
-                                                    (type holding)
-                                                    (arm ?arm)
-                                                    (grasp :front)
-                                                    (object
-                                                     ?more-precise-perceived-object-desig)
-                                                    ;; (goal ?goal)
-                                                    )))
-                                      (desig:an action
-                                                (type holding)
-                                                (desig:when ?arm
-                                                  (arm ?arm))
-                                                (desig:when ?grasp
-                                                  (grasp :front))
-                                                (object
-                                                 ?more-precise-perceived-object-desig)
-                                                ;; (goal ?goal)
-                                                )))
-                                 
+                                               (T (list :left))))                                 
                                  (remove-cap-action
                                   ;; if remove-cap-action already exists,
                                   ;; use its params for removing cap
@@ -764,42 +737,40 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                                                   referenced-action-desig
                                                   :grasp)))
                                           (desig:an action
-                                                    (type holding2)
-                                                    (arm ?other-arm)
-                                                    (grasp :top)
+                                                    (type grabbing-bottle)
+                                                    ;(arm ?other-arm)
+                                                    (grasp ?grasp) ;;:top)
                                                     (object
                                                      ?more-precise-perceived-object-desig)
                                                     ;; (goal ?goal)
                                                     )))
                                       (desig:an action
-                                                (type holding2)
-                                                (desig:when ?arm
-                                                  (arm ?other-arm))
+                                                (type grabbing-bottle)
+                                                ;; (desig:when ?arm
+                                                ;;   (arm ?other-arm))
                                                 (desig:when ?grasp
-                                                  (grasp :top))
+                                                  (grasp ?grasp)) ;;:top))
                                                 (object
                                                  ?more-precise-perceived-object-desig)
                                                 ;; (goal ?goal)
-                                                )))
-                                 )
-                            (print ">>>>>>>>>>>>>>BREAK 0")
-                            (print ?other-arm)
-                            (print ?arm)
-                            ;; (break)
-                            (setf pick-up-action (desig:current-desig pick-up-action))
-                            (proj-reasoning:check-picking-up-collisions pick-up-action)
-                            (setf pick-up-action (desig:current-desig pick-up-action))
-                            (exe:perform pick-up-action)
-                            ;; (print ">>>>>>>>>>>>>>BREAK 1")
-                            (break)
+                                                ))))
+        
+                            (print remove-cap-action)
+                            (print "--------")
+                            (print pick-up-action)
+                            ;;(break)
                             (setf remove-cap-action (desig:current-desig remove-cap-action))
-                            (proj-reasoning::check-picking-up-collisions remove-cap-action) 
+                            (proj-reasoning::check-removing-cap-collisions remove-cap-action) 
                             (setf remove-cap-action (desig:current-desig remove-cap-action))                            
                             (exe:perform remove-cap-action)
-                            (print ">>>>>>>>>>>>>>BREAK 2")
-                            ;;(break)
-                            
-                            (desig:current-desig ?object-designator)))))))))))))))
+
+                            (desig:current-desig ?object-designator))))))))
+
+              ;; (exe:perform (desig:an action
+              ;;                        (type screwing-open)
+              ;;                        (object
+              ;;                         ?more-precise-perceived-object-desig)))
+              )))))))
 
 
 (defun remove-cap (&key
@@ -938,7 +909,9 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
              ;; for now this code is the right code
              (arms (?arm))))))
 
-(defun pick-up2 (&key
+
+
+(defun grab-bottle (&key
                   ((:object ?object-designator))
                   ((:arm ?arm))
                   ((:gripper-opening ?gripper-opening))
@@ -982,7 +955,8 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
   (print "?right-lift-poses")
   (print ?right-lift-poses)
 
-  ;; (break)
+  ;;(break)
+  
   (roslisp:ros-info (pick-place pick-up) "Looking")
   (cpl:with-failure-handling
       ((common-fail:ptu-low-level-failure (e)
@@ -995,6 +969,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                (type looking)
                (target (desig:a location
                                 (pose ?look-pose))))))
+  ;;(break)
   (cpl:par
     (roslisp:ros-info (pick-place pick-up) "Opening gripper and reaching")
     (let ((?goal `(cpoe:gripper-joint-at ,?arm ,?gripper-opening)))
@@ -1004,6 +979,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                  (gripper ?arm)
                  (position ?gripper-opening)
                  (goal ?goal))))
+    
     (cpl:with-failure-handling
         ((common-fail:manipulation-low-level-failure (e)
            (roslisp:ros-warn (pp-plans pick-up)
@@ -1017,7 +993,9 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                    (object ?object-designator)
                    (left-poses ?left-reach-poses)
                    (right-poses ?right-reach-poses)
+                   (move-base nil)
                    (goal ?goal))))))
+  ;;(break)
   (roslisp:ros-info (pick-place pick-up) "Grasping")
   (cpl:with-failure-handling
       ((common-fail:manipulation-low-level-failure (e)
@@ -1079,14 +1057,15 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
     ;;   (cpl:fail 'common-fail:gripper-closed-completely
     ;;             :description "Object slipped"))
      )
-  (roslisp:ros-info (pick-place place) "Parking")
-  (exe:perform
-   (desig:an action
-             (type parking-arms)
-             ;; TODO: this will not work with dual-arm grasping
-             ;; but as our ?arm is declared as a keyword,
-             ;; for now this code is the right code
-             (arms (?arm))))))
+  ;; (roslisp:ros-info (pick-place place) "Parking")
+  ;; (exe:perform
+  ;;  (desig:an action
+  ;;            (type parking-arms)
+  ;;            ;; TODO: this will not work with dual-arm grasping
+  ;;            ;; but as our ?arm is declared as a keyword,
+  ;;            ;; for now this code is the right code
+  ;;            (arms (?arm))))
+  ))
 
 
 (defun screw-open (&key

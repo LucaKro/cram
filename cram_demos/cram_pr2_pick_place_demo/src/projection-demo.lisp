@@ -98,10 +98,10 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
 
 
 (defun spawn-objects-on-sink-counter (&key
-                                        (object-types '(:breakfast-cereal
-                                                        :cup
-                                                        :bowl
-                                                        :spoon
+                                        (object-types '(;; :breakfast-cereal
+                                                        ;; :cup
+                                                        ;; :bowl
+                                                        ;; :spoon
                                                         :milk))
                                         (spawning-poses-relative *object-spawning-poses*)
                                         (random NIL))
