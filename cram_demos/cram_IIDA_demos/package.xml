@@ -2,10 +2,10 @@
   <name>cram_IIDA_demos</name>
   <version>0.7.0</version>
   <description>
-    A bunch of demos that work on a bunch of robots in a bunch of environments
+    IIDA pipeline and demo.
   </description>
-  <author>Gayane Kazhoyan</author>
-  <maintainer email="kazhoyan@cs.uni-bremen.de">Gayane Kazhoyan</maintainer>
+  <author>Vanessa Hassouna</author>
+  <maintainer email="hassouna@cs.uni-bremen.de">Vanessa Hassouna</maintainer>
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>

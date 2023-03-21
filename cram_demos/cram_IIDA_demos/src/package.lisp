@@ -1,5 +1,5 @@
 ;;;
-;;; Copyright (c) 2018, Gayane Kazhoyan <kazhoyan@cs.uni-bremen.de>
+;;; Copyright (c) 2023, Vanessa Hassouna <hassouna@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 (in-package :cl-user)
 
-(defpackage cram-projection-demos
+(defpackage cram-IIDA-demos
   (:nicknames #:demos)
   (:use #:common-lisp #:cram-prolog #:urdf-proj #:cram-designators #:cram-executive)
   (:export
