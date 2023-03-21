@@ -1,4 +1,5 @@
 ;;;
+;;;
 ;;; Copyright (c) 2023, Vanessa Hassouna <hassouna@cs.uni-bremen.de>
 ;;; All rights reserved.
 ;;;
@@ -27,7 +28,7 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(defsystem cram-IIDA-demos
+(defsystem cram-iida-demos
   :author "Vanessa Hassouna"
   :maintainer "Vanessa Hassouna"
   :license "BSD"
@@ -84,6 +85,7 @@
      (:file "costmaps" :depends-on ("package"))
      (:file "setup" :depends-on ("package"))
      (:file "utils" :depends-on ("package"))
+     (:file "household-demo" :depends-on ("package" "utils"))
      (:file "apartment-demo" :depends-on ("package" "utils"
                                                     ;; for initializing
                                                     "household-demo"))))))

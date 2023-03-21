@@ -29,7 +29,7 @@
 
 (in-package :cl-user)
 
-(defpackage cram-IIDA-demos
+(defpackage cram-iida-demos
   (:nicknames #:demos)
   (:use #:common-lisp #:cram-prolog #:urdf-proj #:cram-designators #:cram-executive)
   (:export

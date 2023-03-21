@@ -130,9 +130,6 @@
     <group if="$(arg household)">
       <include file="$(find iai_maps)/launch/map.launch" />
     </group>
-     <group if="$(arg apartment)">
-      <include file="$(find iai_pr2_bringup)/launch/map.launch" />
-    </group>
     <group if="$(arg retail)">
       <node name="map_server" pkg="map_server" type="map_server" output="screen"
             args="$(find iai_refills_lab)/maps/refills_lab.yaml" />
