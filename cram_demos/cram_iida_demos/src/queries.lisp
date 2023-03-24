@@ -30,6 +30,7 @@
 (in-package :demos)
 
 
+
 (defun query-get-source-container()
   "get positions of shelfs from KnowRob and store them in a struct.
    Poses are returned in the map frame"
@@ -39,16 +40,16 @@
              executes_task(Act, Tsk),
              has_participant(Act, Obj), 
              has_type(Role, soma:'SourceContainer'),
-             triple(Obj, dul:'hasRole', Role)."))
+             triple(Obj, dul:'hasRole', Role).":package :demos))
 	 (?knowrob-obj 
 	   (cl::write-to-string
 	    (cut:var-value '|?Obj| (cut::lazy-car ?query))))
-	 (?obj-start (+ 1 (search "#" ?knowrob-obj))))
-
-    (cl::make-symbol
-     (string-trim "'"
-		  (string-trim "|"
-			       (subseq ?knowrob-obj ?obj-start))))))
+	 (?obj-start (+ 1 (search "#" ?knowrob-obj)))
+	 (?obj-trim 
+		      (string-trim "'"
+				   (string-trim "|"
+						(subseq ?knowrob-obj ?obj-start)))))
+    ?obj-trim))
 
 
 (defun query-get-destination-container()
@@ -59,17 +60,16 @@
 	    "has_type(Tsk, 'http://www.ease-crc.org/ont/SOMA-ACT.owl#Pouring'),
              executes_task(Act, Tsk), has_participant(Act, Obj), 
              has_type(Role, soma:'DestinationContainer'), 
-             triple(Obj, dul:'hasRole', Role)."))
+             triple(Obj, dul:'hasRole', Role)." :package :demos))
 	 (?knowrob-obj 
 	   (cl::write-to-string
 	    (cut:var-value '|?Obj| (cut::lazy-car ?query))))
-	 (?obj-start (+ 1 (search "#" ?knowrob-obj))))
-
-    (cl::make-symbol
-     (string-trim "'"
-		  (string-trim "|"
-			       (subseq ?knowrob-obj ?obj-start))))))
-
+	 (?obj-start (+ 1 (search "#" ?knowrob-obj)))
+	  (?obj-trim 
+		      (string-trim "'"
+				   (string-trim "|"
+						(subseq ?knowrob-obj ?obj-start)))))
+    ?obj-trim))
 
 
 (defun query-get-wait-duration()
@@ -78,7 +78,7 @@
   (let* ((?query
 	   (json-prolog:prolog-simple
 	    "has_type(Tsk, 'http://www.ease-crc.org/ont/SOMA-ACT.owl#Pouring'),
-             executes_task(Act, Tsk), event_interval(Act, Begin, End)."))
+             executes_task(Act, Tsk), event_interval(Act, Begin, End)." :package :demos))
 	 (?knowrob-obj-begin (cut:var-value '|?Begin| (cut::lazy-car ?query)))
 	 (?knowrob-obj-end (cut:var-value '|?End| (cut::lazy-car ?query))))
     (- ?knowrob-obj-end ?knowrob-obj-begin)))
@@ -93,16 +93,16 @@
 	    "has_type(Tsk, 'http://www.ease-crc.org/ont/SOMA-ACT.owl#Pouring'),
              executes_task(Act, Tsk),
              has_type(Hand, soma:'Hand'), 
-             has_participant(Act,Hand)."))
+             has_participant(Act,Hand).":package :demos))
 	 (?knowrob-obj 
 	   (cl::write-to-string
 	    (cut:var-value '|?Hand| (cut::lazy-car ?query))))
-	 (?obj-start (+ 1 (search "#" ?knowrob-obj))))
-
-    (cl::make-symbol
-     (string-trim "'"
-		  (string-trim "|"
-			       (subseq ?knowrob-obj ?obj-start))))))
+	 (?obj-start (+ 1 (search "#" ?knowrob-obj)))
+	  (?obj-trim 
+		      (string-trim "'"
+				   (string-trim "|"
+						(subseq ?knowrob-obj ?obj-start)))))
+    ?obj-trim))
 
 (defun query-get-pouring-motion()
   "get positions of shelfs from KnowRob and store them in a struct.
@@ -112,17 +112,16 @@
 	    "has_type(Tsk, 'http://www.ease-crc.org/ont/SOMA-ACT.owl#Pouring'),
              executes_task(Act, Tsk), 
              triple(Motion,
-             'http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#classifies', Act)."))
+             'http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#classifies', Act)." :package :demos))
 	 (?knowrob-obj 
 	   (cl::write-to-string
 	    (cut:var-value '|?Motion| (cut::lazy-car ?query))))
-	 (?obj-start (+ 1 (search "#" ?knowrob-obj))))
-
-    (cl::make-symbol
-     (string-trim "'"
-		  (string-trim "|"
-			       (subseq ?knowrob-obj ?obj-start))))))
-
+	 (?obj-start (+ 1 (search "#" ?knowrob-obj)))
+	  (?obj-trim 
+		      (string-trim "'"
+				   (string-trim "|"
+						(subseq ?knowrob-obj ?obj-start)))))
+    ?obj-trim))
 
 (defun query-get-maximum-pouring-angle()
   "get positions of shelfs from KnowRob and store them in a struct.
@@ -135,9 +134,9 @@
              triple(Obj, dul:'hasRole', Role), 
              triple(Obj, dul:'hasRegion', Region), 
              triple(Region,
-             'http://www.ease-crc.org/ont/SOMA-OBJ.owl#hasJointPositionMax', AngleMax)."))
+             'http://www.ease-crc.org/ont/SOMA-OBJ.owl#hasJointPositionMax', AngleMax)." :package :demos))
 	 (?knowrob-obj (cut:var-value '|?AngleMax| (cut::lazy-car ?query))))
-    ?knowrob-obj))
+     ?knowrob-obj))
 
 
 (defun query-get-minimum-pouring-angle()
@@ -151,6 +150,6 @@
              triple(Obj, dul:'hasRole', Role), 
              triple(Obj, dul:'hasRegion', Region), 
              triple(Region,
-             'http://www.ease-crc.org/ont/SOMA-OBJ.owl#hasJointPositionMin', AngleMin)."))
+             'http://www.ease-crc.org/ont/SOMA-OBJ.owl#hasJointPositionMin', AngleMin).":package :demos))
 	 (?knowrob-obj (cut:var-value '|?AngleMin| (cut::lazy-car ?query))))
     ?knowrob-obj))

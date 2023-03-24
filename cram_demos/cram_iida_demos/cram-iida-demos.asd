@@ -85,7 +85,9 @@
      (:file "costmaps" :depends-on ("package"))
      (:file "setup" :depends-on ("package"))
      (:file "utils" :depends-on ("package"))
+     (:file "queries" :depends-on ("package"))
      (:file "household-demo" :depends-on ("package" "utils"))
      (:file "apartment-demo" :depends-on ("package" "utils"
                                                     ;; for initializing
-                                                    "household-demo"))))))
+                                                    "household-demo"
+						    "queries"))))))

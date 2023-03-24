@@ -39,21 +39,102 @@
 ;;     (vertical-offset 0.02)
 ;;     (wait-duration 5))
 
+(defun spawn-test-liquid ()
+  (print "liquiiiidooo")
+  
+  (let* ((pose (btr:object-pose :jeroen-cup-1))
+	 (origin (cl-transforms::origin pose))
+	 (z1 (+ 0.00 (cl-transforms::z origin)))
+	 (z2 (+ 0.00 (cl-transforms::z origin)))
+	 (z3 (+ 0.00 (cl-transforms::z origin)))
+	 (z4 (+ 0.00 (cl-transforms::z origin)))
+	 (z5 (- (cl-transforms::z origin) 0.03))
+	 (y1 (+ 0.00 (cl-transforms::y origin)))
+	 (y2 (+ 0.0002 (cl-transforms::y origin)))
+	 (y3 (+ 0.0004 (cl-transforms::y origin)))
+	 (y4 (+ 0.0006 (cl-transforms::y origin)))
+	 (y5 (+ 0.06 (cl-transforms::y origin)))
+	 
+	(x (cl-transforms::x origin))
+	(y (cl-transforms::y origin))
+	
+	(orientation (cl-transforms::orientation pose))
+	(pose1 (cl-transforms::make-pose
+		   (cl-transforms::make-3d-vector x y1 z1)
+		   orientation))
+	 (pose2 (cl-transforms::make-pose
+		   (cl-transforms::make-3d-vector x y2 z2)
+		   orientation))
+	 (pose3 (cl-transforms::make-pose
+		   (cl-transforms::make-3d-vector x y3 z3)
+		   orientation))
+	 (pose4 (cl-transforms::make-pose
+		   (cl-transforms::make-3d-vector x y4 z4)
+		   orientation))
+	 (pose5 (cl-transforms::make-pose
+		   (cl-transforms::make-3d-vector x y5 z5)
+		   orientation)))
+    ;; (btr:add-vis-axis-object pose)
+    ;; (sleep 2)
+    ;; (btr:add-vis-axis-object pose5)
+    
+    (btr::add-object btr:*current-bullet-world* :liquid-minor 'b1 pose5 :color '(0 0.5 0.4 0.5))
+    (btr::add-object btr:*current-bullet-world* :liquid-minor 'b2 pose5 :color '(0 0.4 0.3 0.5))
+    (btr::add-object btr:*current-bullet-world* :liquid-minor 'b3 pose5 :color '(0 0.4 0.5 0.5))
+    (btr::add-object btr:*current-bullet-world* :liquid-minor 'b4 pose5 :color '(0 0.3 0.4 0.5))
+    (btr::add-object btr:*current-bullet-world* :liquid-minor 'b5 pose5 :color '(0 0.3 0.4 0.5))))
+
+(defun spawn-standart-liquid ()
+    (spawn-test-liquid)
+    ;(btr:simulate btr:*current-bullet-world* 1)
+    
+  (print "liquid spawned 13940888888888888884120938iwohdwh~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~")
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  (sleep 0.4)
+  (btr:simulate btr:*current-bullet-world* 0.02)
+  )
+
+
 (defun pour-without-retries (&key
                                ((:arm ?arm))
                                ((:side ?side))
                                ;;grasp
                                ((:left-reach-poses ?left-reach-poses))
-                               ((:left-tilt-down-poses ?left-tilt-down-poses))
+                               ;((:left-tilt-down-poses ?left-tilt-down-poses))
                                ((:left-tilt-up-poses ?left-tilt-up-poses))
-                               ((:left-tilt-second-poses ?left-tilt-second-poses))
-                               ((:left-tilt-third-poses ?left-tilt-third-poses))
+                               ;((:left-tilt-second-poses ?left-tilt-second-poses))
+                               ;((:left-tilt-third-poses ?left-tilt-third-poses))
                                
                                ((:right-reach-poses ?right-reach-poses))
-                               ((:right-tilt-down-poses ?right-tilt-down-poses))
+                               ;((:right-tilt-down-poses ?right-tilt-down-poses))
                                ((:right-tilt-up-poses ?right-tilt-up-poses))
-                               ((:right-tilt-second-poses ?right-tilt-second-poses))
-                               ((:right-tilt-third-poses ?right-tilt-third-poses))
+                               ;((:right-tilt-second-poses ?right-tilt-second-poses))
+                               ;((:right-tilt-third-poses ?right-tilt-third-poses))
                                
                                ((:on-object ?on-object))
                                ;;object
@@ -72,7 +153,7 @@
   ;;          ;;(type keyword ?arm side grasp)
   ;;          (type number ?wait-duration)
   ;;          (ignore side grasp object))
-  (let* ((sleepy nil)
+  (let* ((sleepy t)
          (?movy nil)
          (?align-planes-left nil)
          (?align-planes-right nil)
@@ -121,7 +202,7 @@
 
     
    
-    
+   
     (when sleepy
       (sleep 2))
 
@@ -149,17 +230,15 @@
                      (align-planes-right ?align-planes-right)
                      (move-base ?movy)
                      ;;(collision-mode :allow-attached)
-                     (goal ?goal))))
-        ))
+                     (goal ?goal))))))
     
     
-    (when sleepy
-      (sleep 5))
+     (when sleepy
+       (sleep 2))
 
 
-    
-    
-    
+    (spawn-standart-liquid)
+
     (cpl:with-retry-counters ((giskardside-retries 3))
       (cpl:with-failure-handling
           (((or common-fail:manipulation-low-level-failure
@@ -181,11 +260,7 @@
                      (left-poses ?left-reach-poses)
                      (right-poses ?right-reach-poses)
                      (application-context pouring)
-                     (goal ?goal))))
-        ))
-
-    
-    ) )
+                     (goal ?goal))))))))
 
 
 
@@ -217,7 +292,6 @@
     ;;               (format NIL "Pouring failed: ~a.~%Next" e)
     ;;               :warning-namespace (mpp-plans pour))
     ;;            (setf ?side (cut:lazy-car sides)))))
-        (print ?side)
         (exe:perform
          (desig:an action
                    (type pouring-without-retries)
@@ -229,6 +303,8 @@
                    ;;   (object ?object))
                    (desig:when ?wait-duration
                      (wait-duration ?wait-duration))
+		   (desig:when ?tilt-angle
+                     (wait-duration ?tilt-angle))
                    ))
         ))
 
@@ -271,4 +347,6 @@
      arm
      (grasp (eql :top-front)))
   '((-0.1 0.0 0.019)(0 0 0 1)))
+
+
 

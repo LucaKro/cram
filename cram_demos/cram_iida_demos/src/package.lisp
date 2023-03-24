@@ -38,4 +38,5 @@
    ;; assembly-demo
    #:assembly-demo
    ;; retail-demo
-   #:retail-demo))
+   ))
+

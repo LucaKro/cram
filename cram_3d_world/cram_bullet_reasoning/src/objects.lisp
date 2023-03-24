@@ -552,3 +552,16 @@ recursive function."
                  (remove-loose-attachment-for attached-object)))
       (if (equal (car (last already-visited)) (name object))
           (setf already-visited '())))))
+
+
+(defmethod add-object ((world bt-world) (type (eql :liquid-minor)) name pose
+                       &key (mass 200) (radius 0.008) color)      
+ 
+  (make-item world name (list type)
+              (list
+                (make-instance
+                    'rigid-body
+                  :name 'waterdrop :mass mass :pose (ensure-pose pose)
+                  :collision-shape (make-instance 'colored-sphere-shape
+                                     :radius radius :color color))
+                )))

@@ -79,7 +79,7 @@
     (lisp-pred typep ?designator desig:motion-designator)
     (member ?number-key (:effort
                          :joint-angle :joint-angle-threshold :speed
-                         :duration))
+                         :duration :tilt-angle))
     (property-member (?number-key ?value) ?designator)
     (assert-type ?value (or keyword number) "MOTION SPEC:PROPERTY"))
 
@@ -134,7 +134,7 @@
     (lisp-pred typep ?designator desig:action-designator)
     (member ?keyword-or-list-key (:gripper
                                   :arm :direction :grasp :camera :type
-                                  :context :link :configuration
+                                  :context :link :configuration 
                                   :left-configuration :right-configuration
                                   :collision-mode :side))
     (property-member (?keyword-or-list-key ?value) ?designator)
@@ -149,7 +149,7 @@
 
   (<- (%property ?designator (?number-key ?value))
     (lisp-pred typep ?designator desig:action-designator)
-    (member ?number-key (:position :effort :distance :duration))
+    (member ?number-key (:position :effort :distance :duration :tilt-angle))
     (property-member (?number-key ?value) ?designator)
     (assert-type ?value number "ACTION SPEC:PROPERTY"))
 

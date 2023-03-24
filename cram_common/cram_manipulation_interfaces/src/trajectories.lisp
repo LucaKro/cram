@@ -538,66 +538,21 @@ correct parent frame: ~a and ~a"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; POUR ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defgeneric get-source-object-in-target-object-transform (source-object-type
-                                                          source-object-name
-                                                          target-object-type
-                                                          target-object-name
-                                                          side grasp)
-  (:documentation "Returns to-T-so for pouring from given `source-object-type'
-into `target-object-type', where the source object is still upright.")
-  (:method (source-object-type source-object-name
-            target-object-type target-object-name
-            side grasp)
-    "Per default we return identity, which makes no sense but gives a hint."
-    (cl-transforms-stamped:make-transform-stamped
-     (roslisp-utilities:rosify-underscores-lisp-name target-object-name)
-     (roslisp-utilities:rosify-underscores-lisp-name source-object-name)
-     0.0
-     (cl-transforms:make-identity-vector)
-     (cl-transforms:make-identity-rotation))
-    #+for-overloaded-methods-use-translate-pose-and-rotate-pose
-    (translate-pose grasp-pose
-                    :x-offset (case grasp
-                                (:front (- *pour-xy-offset*))
-                                (:side 0.0)
-                                (error "can only pour from :side or :front"))
-                    :y-offset (case grasp
-                                (:front 0.0)
-                                (:side (case arm
-                                         (:left *pour-xy-offset*)
-                                         (:right (- *pour-xy-offset*))
-                                         (t (error "arm can only be :left or :right"))))
-                                (error "can only pour from :side or :front"))
-                    :z-offset (+ *bottle-grasp-z-offset*
-                                 *pour-z-offset*))))
-
-(defgeneric get-tilt-angle-for-pouring (source-object-type target-object-type)
-  (:documentation "Returns a vertical tilting angle in radians
-for pouring from given `source-object-type' into `target-object-type'.")
-  (:method (source-object-type target-object-type)
-    "Per default, the robot completely flips the source-object around when tilting,
-such that a 180 degree tilting angle is used per default."
-    pi))
-
-(defgeneric get-wait-duration-for-pouring (source-object-type
-                                           target-object-type
-                                           tilt-angle)
-  (:documentation "Returns a wait duration in seconds
-for pouring from given `source-object-type' into `target-object-type'
-with the given `tilt-angle'.")
-  (:method (source-object-type target-object-type tilt-angle)
-    "Per default, the robot completely flips the source-object around when tilting,
-so we assume that all the source contents drops into the target right away."
-    0))
 
 (defmethod get-action-trajectory :heuristics 20 ((action-type (eql :pouring))
                                                  arm
                                                  grasp
                                                  location
                                                  objects-acted-on
-                                                 &key tilt-angle side)
+                                                 &key
+						   tilt-angle
+						   side
+						  )
+  (print "knowledge-enabled")
+  (print tilt-angle)
   (print side)
   (print arm)
+  (sleep 5)
   (print "this is in pouring trajectories")
   (let* (;; (source-object
          ;;   (first objects-acted-on))
@@ -635,13 +590,17 @@ so we assume that all the source contents drops into the target right away."
               arm oTg-std)
             :orientation 
             (cl-tf:rotation to-T-to-offset)))
-         (tilt-angle (cram-math:degrees->radians 40))
+	 
+	 (tilt-angle
+	   (if (>= tilt-angle 0)
+	     tilt-angle
+	     (cram-math:degrees->radians 40)))
          (pre-tilting-poses
            (case side
-             (:top-front (rotate-pose-in-own-frame-and-change-z
-                          approach-pose :y (cram-math:degrees->radians 60) 0.05 0 0.031))
-             (:top-left (rotate-pose-in-own-frame-and-change-z
-                         approach-pose :x (cram-math:degrees->radians 60) 0.0 -0.05 0.031))
+             ;; (:top-front (rotate-pose-in-own-frame-and-change-z
+             ;;              approach-pose :y (cram-math:degrees->radians 60) 0.05 0 0.031))
+             ;; (:top-left (rotate-pose-in-own-frame-and-change-z
+             ;;             approach-pose :x (cram-math:degrees->radians 60) 0.0 -0.05 0.031))
              (:top-right (cram-tf:apply-transform
                           (cram-tf:pose-stamped->transform-stamped
                            (rotate-pose-in-own-frame-and-change-z
@@ -665,33 +624,34 @@ so we assume that all the source contents drops into the target right away."
 
          (tilting-poses
            (case side
-             (:top-front (rotate-pose-in-own-frame-and-change-z
-                          pre-tilting-poses :y tilt-angle -0.02 0 0.06))
-             (:top-left (rotate-pose-in-own-frame-and-change-z 
-                         pre-tilting-poses :x tilt-angle 0 0 -0.05))
+             ;; (:top-front (rotate-pose-in-own-frame-and-change-z
+             ;;              pre-tilting-poses :y tilt-angle -0.02 0 0.06))
+             ;; (:top-left (rotate-pose-in-own-frame-and-change-z 
+             ;;             pre-tilting-poses :x tilt-angle 0 0 -0.05))
              (:top-right (cram-tf:rotate-pose-in-own-frame
                           pre-tilting-poses :x (- tilt-angle)))
              (t (error "can only pour from :side or :front"))))
+	 )
          
-         (tilting-poses-second
-           (case side
-             (:top-front (cram-tf:rotate-pose-in-own-frame
-                              tilting-poses :y tilt-angle))
-             (:top-left (cram-tf:rotate-pose-in-own-frame
-                         tilting-poses :x tilt-angle))
-             (:top-right (cram-tf:rotate-pose-in-own-frame
-                          tilting-poses :x (- tilt-angle)))
-             (t (error "can only pour from :side or :front"))) )
+         ;; (tilting-poses-second
+         ;;   (case side
+         ;;     (:top-front (cram-tf:rotate-pose-in-own-frame
+         ;;                      tilting-poses :y tilt-angle))
+         ;;     (:top-left (cram-tf:rotate-pose-in-own-frame
+         ;;                 tilting-poses :x tilt-angle))
+         ;;     (:top-right (cram-tf:rotate-pose-in-own-frame
+         ;;                  tilting-poses :x (- tilt-angle)))
+         ;;     (t (error "can only pour from :side or :front"))) )
 
-         (tilting-poses-third
-           (case side
-             (:top-front (cram-tf:rotate-pose-in-own-frame
-                          tilting-poses-second :y tilt-angle))
-             (:top-left (cram-tf:rotate-pose-in-own-frame
-                         tilting-poses-second :x tilt-angle))
-             (:top-right (cram-tf:rotate-pose-in-own-frame
-                          tilting-poses-second :x (- tilt-angle)))
-             (t (error "can only pour from :side or :front")))))
+         ;; (tilting-poses-third
+         ;;   (case side
+         ;;     (:top-front (cram-tf:rotate-pose-in-own-frame
+         ;;                  tilting-poses-second :y tilt-angle))
+         ;;     (:top-left (cram-tf:rotate-pose-in-own-frame
+         ;;                 tilting-poses-second :x tilt-angle))
+         ;;     (:top-right (cram-tf:rotate-pose-in-own-frame
+         ;;                  tilting-poses-second :x (- tilt-angle)))
+         ;;     (t (error "can only pour from :side or :front")))))
 
            ;;(tilting-poses
            ;; rotate-pose-in-own-frame 
@@ -705,7 +665,8 @@ so we assume that all the source contents drops into the target right away."
     ;; (print approach-pose)
     ;; (print pre-tilting-poses)
     ;; (sleep 10)
-         
+    (print tilt-angle)
+    (sleep 10)
         (mapcar (lambda (label poses-in-base)
               (man-int:make-traj-segment
                :label label
@@ -725,17 +686,17 @@ so we assume that all the source contents drops into the target right away."
                        poses-in-base)))
          
             '(:reaching
-              :tilting-down
+              ;tilting-down
               :tilting
-              :tilting-second
-              :tilting-third
+              ;:tilting-second
+              ;:tilting-third
               ;; :retracting
               )
             `((,approach-pose)
-              (,pre-tilting-poses)
+              ;(,pre-tilting-poses)
               (,tilting-poses)
-              (,tilting-poses-second)
-              (,tilting-poses-third)
+              ;(,tilting-poses-second)
+              ;(,tilting-poses-third)
               ;; (,to-T-stdg
               )))
  
@@ -827,3 +788,57 @@ so we assume that all the source contents drops into the target right away."
         (cl-transforms:pose
          (cl-transforms:copy-pose pose :orientation new-orientation))
         )))
+
+
+(defgeneric get-source-object-in-target-object-transform (source-object-type
+                                                          source-object-name
+                                                          target-object-type
+                                                          target-object-name
+                                                          side grasp)
+  (:documentation "Returns to-T-so for pouring from given `source-object-type'
+into `target-object-type', where the source object is still upright.")
+  (:method (source-object-type source-object-name
+            target-object-type target-object-name
+            side grasp)
+    "Per default we return identity, which makes no sense but gives a hint."
+    (cl-transforms-stamped:make-transform-stamped
+     (roslisp-utilities:rosify-underscores-lisp-name target-object-name)
+     (roslisp-utilities:rosify-underscores-lisp-name source-object-name)
+     0.0
+     (cl-transforms:make-identity-vector)
+     (cl-transforms:make-identity-rotation))
+    #+for-overloaded-methods-use-translate-pose-and-rotate-pose
+    (translate-pose grasp-pose
+                    :x-offset (case grasp
+                                (:front (- *pour-xy-offset*))
+                                (:side 0.0)
+                                (error "can only pour from :side or :front"))
+                    :y-offset (case grasp
+                                (:front 0.0)
+                                (:side (case arm
+                                         (:left *pour-xy-offset*)
+                                         (:right (- *pour-xy-offset*))
+                                         (t (error "arm can only be :left or :right"))))
+                                (error "can only pour from :side or :front"))
+                    :z-offset (+ *bottle-grasp-z-offset*
+                                 *pour-z-offset*))))
+
+(defgeneric get-tilt-angle-for-pouring (source-object-type target-object-type)
+  (:documentation "Returns a vertical tilting angle in radians
+for pouring from given `source-object-type' into `target-object-type'.")
+  (:method (source-object-type target-object-type)
+    "Per default, the robot completely flips the source-object around when tilting,
+such that a 180 degree tilting angle is used per default."
+    pi))
+
+(defgeneric get-wait-duration-for-pouring (source-object-type
+                                           target-object-type
+                                           tilt-angle)
+  (:documentation "Returns a wait duration in seconds
+for pouring from given `source-object-type' into `target-object-type'
+with the given `tilt-angle'.")
+  (:method (source-object-type target-object-type tilt-angle)
+    "Per default, the robot completely flips the source-object around when tilting,
+so we assume that all the source contents drops into the target right away."
+    0))
+
