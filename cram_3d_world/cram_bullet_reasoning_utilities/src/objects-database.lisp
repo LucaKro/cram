@@ -44,6 +44,25 @@
             (%scenario-object-color ?object-type ?color)
             (scenario-objects-default-color ?color))))
 
+  ;; Default color to assign to object meshes.
+  (<- (scenario-objects-default-size :medium))
+
+  ;;  ;; Interface to query for colors for different object types.
+  ;; (<- (scenario-object-size ?scenario ?object-type ?size)
+  ;;   (-> (bound ?scenario)
+  ;;       (%scenario-object-size ?scenario ?object-type ?size)
+  ;;       (-> (%scenario-object-size ?object-type ?size)
+  ;;           (%scenario-object-size ?object-type ?size)
+  ;;           (scenario-objects-default-size ?size))))
+
+   ;; Interface to query for colors for different object types.
+  (<- (scenario-object-size ?scenario ?object-type ?size)
+    (-> (bound ?scenario)
+        (%scenario-object-size ?scenario ?object-type ?size)
+        (-> (%scenario-object-size ?object-type ?size)
+            (%scenario-object-size ?object-type ?size)
+            (scenario-objects-default-size ?size))))
+
   ;; Colors for different object types different in specific scenario. E.g.:
   ;; (<- (%scenario-object-color :pancake-making pancake-maker (1.0 0 0)))
 

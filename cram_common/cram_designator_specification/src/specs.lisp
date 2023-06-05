@@ -268,4 +268,9 @@
   (<- (%property ?designator (:location ?location))
     (lisp-pred typep ?designator desig:object-designator)
     (property-member (:location ?location) ?designator)
-    (assert-type ?location desig:location-designator "OBJECT SPEC:PROPERTY")))
+    (assert-type ?location desig:location-designator "OBJECT SPEC:PROPERTY"))
+
+  (<- (%property ?designator (:size ?size))
+    (lisp-pred typep ?designator desig:object-designator)
+    (property-member (:size ?size) ?designator)
+    (assert-type ?size symbol "OBJECT SPEC:PROPERTY")))
