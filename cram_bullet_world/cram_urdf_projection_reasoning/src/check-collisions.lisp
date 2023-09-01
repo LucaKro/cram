@@ -498,3 +498,121 @@ Store found pose into designator or throw error if good pose not found."
 
         (btr:restore-world-poses world-pose-info)
         (btr:clear-costmap-vis-object)))))
+
+
+
+;; Luca Thesis
+
+(defun check-removing-cap-collisions (pick-up-action-desig &optional (retries 30))
+  (when *projection-checks-enabled*
+    (let ((world-pose-info (btr:get-world-objects-pose-info)))
+      (unwind-protect
+
+           (cpl:with-failure-handling
+               ((desig:designator-error (e)
+                  (roslisp:ros-warn (coll-check pick)
+                                    "Desig ~a could not be resolved: ~a~%Cannot pick."
+                                    pick-up-action-desig e)
+                  (cpl:fail 'common-fail:object-unreachable
+                            :description "Designator could not be resolved")))
+
+             ;; When the pick-up goal configuration is unreachable based on projection
+             ;; or if resulting configuration collides with environment,
+             ;; take a new configuration and retry.
+             ;; If no configuration is good, throw `object-unreachable' failure
+             (cpl:with-retry-counters ((pick-up-configuration-retries retries))
+               (cpl:with-failure-handling
+                   (((or common-fail:manipulation-low-level-failure
+                         common-fail:manipulation-goal-in-collision) (e)
+                      (declare (ignore e))
+                      (urdf-proj::move-torso :upper-limit)
+                      (cpl:do-retry pick-up-configuration-retries
+                        (setf pick-up-action-desig
+                              (desig:next-solution pick-up-action-desig))
+                        (if pick-up-action-desig
+                            (cpl:retry)
+                            (progn
+                              (roslisp:ros-warn (coll-check pick)
+                                                "No more pick-up samples to try.~
+                                                 Object unreachable.")
+                              (cpl:fail 'common-fail:object-unreachable
+                                        :description
+                                        "No more pick-up samples to try."))))
+                      (roslisp:ros-warn (coll-check pick) "No more retries left :'(")
+                      (cpl:fail 'common-fail:object-unreachable
+                                :description "No more grasp retries left.")))
+
+                 (let* ((pick-up-action-referenced
+                          (second (desig:reference pick-up-action-desig)))
+                        (object-designator
+                          (desig:current-desig
+                           (desig:desig-prop-value pick-up-action-referenced
+                                                   :object)))
+                        (arm
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :arm))
+                        (gripper-opening
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :gripper-opening))
+                        (grasp
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :grasp))
+                        (left-reach-poses
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :left-reach-poses))
+                        (right-reach-poses
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :right-reach-poses))
+                        (left-grasp-poses
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :left-grasp-poses))
+                        (right-grasp-poses
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :right-grasp-poses))
+                        (left-lift-poses
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :left-lift-poses))
+                        (right-lift-poses
+                          (desig:desig-prop-value pick-up-action-referenced
+                                                  :right-lift-poses))
+                        (object-name
+                          (desig:desig-prop-value object-designator
+                                                  :name))
+                        (move-base
+                          (infer-move-base object-designator
+                                           pick-up-action-referenced)))
+
+                   (urdf-proj::gripper-action gripper-opening arm)
+
+                   ;; Go over all the trajectory via points and check for collisions
+                   ;; with any object except the one to pick up.
+                   ;; If collision happens,
+                   ;; throw `manipulation-goal-in-collision' failure.
+                   (roslisp:ros-info (coll-check pick)
+                                     "Trying grasp ~a on object ~a with arm ~a~%"
+                                     grasp object-name arm)
+
+                   (mapcar
+                    (lambda (left-poses right-poses collision-flag)
+                      (multiple-value-bind (left-poses right-poses)
+                          (cut:equalize-two-list-lengths left-poses right-poses)
+                        (dotimes (i (length left-poses))
+                          (urdf-proj::move-tcp (nth i left-poses) (nth i right-poses)
+                                               :allow-all nil nil nil move-base)
+                          (unless (< (abs urdf-proj::*debug-short-sleep-duration*)
+                                     0.0001)
+                            (cpl:sleep urdf-proj::*debug-short-sleep-duration*))
+                          (when (urdf-proj::perform-collision-check
+                                 collision-flag
+                                 (nth i left-poses) (nth i right-poses)
+                                 nil nil object-name)
+                            (roslisp:ros-warn (coll-check pick)
+                                              "Robot is in collision with environment.")
+                            (cpl:sleep urdf-proj::*debug-long-sleep-duration*)
+                            (btr:restore-world-poses world-pose-info)
+                            (cpl:fail 'common-fail:manipulation-goal-in-collision)))))
+                    (list left-reach-poses left-grasp-poses left-lift-poses)
+                    (list right-reach-poses right-grasp-poses right-lift-poses)
+                    (list :avoid-all :allow-hand :avoid-all))))))
+
+        (btr:restore-world-poses world-pose-info)))))

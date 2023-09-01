@@ -83,13 +83,11 @@
                  (type going)
                  (target (desig:a location (pose ?pose))))))))
 
-(defun start-logging ()
-  ;;(ccl::start-episode)
-  )
+;; (defun start-logging ()
+;;   (ccl::start-episode))
 
-(defun stop-logging ()
-  ;;(ccl::stop-episode)
-  )
+;; (defun stop-logging ()
+;;   (ccl::stop-episode))
 
 (defun initialize ()
   (sb-ext:gc :full t)
@@ -145,12 +143,13 @@
                                     (random
                                      nil)
                                     (list-of-objects
-                                     '(:bowl :spoon :cup :milk :breakfast-cereal)))
+                                     '(;; :bowl :spoon :cup
+                                       :milk ;; :breakfast-cereal
+                                       )))
 
   (initialize)
   (when cram-projection:*projection-environment*
-    (spawn-objects-on-sink-counter ;;:object-types '(:milk)
-                                   :random random))
+    (spawn-objects-on-sink-counter :random random))
 
   (park-robot)
 
@@ -180,20 +179,98 @@
 
         (exe:perform
          (desig:an action
-                   (type transporting)
+                   (type finding-and-opening-bottle)
                    (context table-setting-counter)
                    (object ?object-to-fetch)
                    ;; (desig:when ?arm-to-use
                    ;;   (arms (?arm-to-use)))
                    )))
 
-      ;; (setf proj-reasoning::*projection-reasoning-enabled* nil)
+
+     ;;
+      ;;(get-tilting-poses grasp (list approach-pose))
+        
+       ;; (setf proj-reasoning::*projection-reasoning-enabled* nil)
       ))
 
   ;; (setf proj-reasoning::*projection-reasoning-enabled* nil)
 
-  (park-robot)
+  ;;(park-robot)
 
   (finalize)
 
   cpl:*current-path*)
+
+
+(defparameter *base-pose-bottle*
+  (cl-transforms-stamped:make-pose-stamped
+   "map" 0.0
+   (cl-transforms:make-3d-vector 0.7 0.6d0 0.00d0)
+   (cl-transforms:axis-angle->quaternion
+    (cl-tf:make-3d-vector 0 0 1)
+    0.0)))
+
+
+(defparameter *bottle-location-pose*
+  (cl-transforms-stamped:make-pose-stamped
+   "base_footprint" 0.0
+   (cl-transforms:make-3d-vector 1.25d0 0d0 0d0)
+   (cl-transforms:make-quaternion 0.0d0 0.0d0 0.8d0 0.0d0)))
+
+(defun start (?grasping-arm)
+  ;; (btr-utils:spawn-object 'milk-1 :milk
+  ;;                                :pose (cl-transforms:make-pose
+  ;;                                       (cl-tf:make-3d-vector 1.34 0.6 0.95)
+  ;;                                       (cl-tf:make-identity-rotation)))
+  (spawn-objects-on-sink-counter)
+  (urdf-proj:with-simulated-robot
+    (let ((?navigation-goal *base-pose-bottle*))
+      (exe:perform (desig:an action
+                             (type going)
+                             (target (desig:a location 
+                                              (pose ?navigation-goal))))))
+    
+    (let ((?looking-direction *bottle-location-pose*))
+      (exe:perform (desig:an action 
+                             (type looking)
+                             (target (desig:a location 
+                                              (pose ?looking-direction))))))
+
+
+    (let ((?opening-arm (cond
+                         ((eql ?grasping-arm :right) :left)
+                         ((eql ?grasping-arm :left) :right)))
+          (?perceived-object (urdf-proj::detect (desig:an object (type :milkbottle))))
+          (?perceived-object-cap (urdf-proj::detect (desig:an object (type :milkbottlecap)))))
+      (cpl:with-retry-counters ((grasping-retry 3))
+        (cpl:with-failure-handling
+            ((common-fail:low-level-failure
+                 (e)
+               (declare (ignore e))
+               (cpl:do-retry grasping-retry
+                 (cpl:retry))
+               (roslisp:ros-warn (open-bottle grasping-fail)
+                                 "~%No more retries~%")))
+          ;; (exe:perform (desig:an action
+          ;;                        (type holding);; cram-holding)
+          ;;                        (arm  (:right)) ;;?grasping-arm)
+          ;;                        (object ?perceived-object)))
+          ;; (exe:perform (desig:an action
+          ;;                        (type cram-holding)
+          ;;                        (arm ?grasping-arm)
+          ;;                        (object ?perceived-object)))
+          (exe:perform
+           (desig:an action
+                     (type 2hand-bottle)
+                     (object ?perceived-object)
+                     (object-cap ?perceived-object-cap)
+                     ))
+          ))
+      
+      (break)
+      (exe:perform
+       (desig:an action
+                 (type bottle)
+                 (arm ?opening-arm)
+                 (object ?perceived-object)
+                 )))))
