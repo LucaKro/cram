@@ -1152,7 +1152,9 @@ collision by moving its torso and base"
              ;;                                     require different torso angles).")))
              (move-torso left-torso-angle))
             (right-torso-angle
-             (move-torso right-torso-angle)))
+             (move-torso right-torso-angle))
+            (left-torso-angle
+             (move-torso left-torso-angle)))
           ;; set the base to inferred position
           (cond
             ((and left-base-pose right-base-pose)
