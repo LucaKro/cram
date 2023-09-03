@@ -76,9 +76,20 @@
   (<- (man-int:object-type-direct-subtype :clothing-item :shoe))
 
   ;;
+  (<- (man-int:object-type-direct-subtype :kitchen-item :corkscrew))
+  (<- (man-int:object-type-direct-subtype :kitchen-item :lid))
+  (<- (man-int:object-type-direct-subtype :kitchen-item :wine))
+
+  (<- (man-int:object-type-direct-subtype :lid :milkbottlecap))
+  (<- (man-int:object-type-direct-subtype :lid :cork))
   
   (<- (man-int:object-type-direct-subtype :milk :milkbottle))
-  (<- (man-int:object-type-direct-subtype :milk :milkbottlecap)))
+  (<- (man-int:object-type-direct-subtype :milk :milkbottlecap))
+
+  (<- (man-int:object-type-direct-subtype :wine :winebottle))
+  (<- (man-int:object-type-direct-subtype :wine :cork))
+  
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -118,6 +129,9 @@
 (defmethod man-int:get-action-gripper-opening :heuristics 20
     ((object-type (eql :tray)))
   0.02)
+(defmethod man-int:get-action-gripper-opening :heuristics 20
+    ((object-type (eql :cork)))
+  0.00)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -898,7 +912,78 @@
   :lift-translation *lift-offset*
   :2nd-lift-translation *lift-offset*)
 
-;; (man-int:def-object-type-to-gripper-transforms :milk '(:left :right) :front
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; winebottle ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *wine-grasp-xy-offset* 0.01 "in meters")
+(defparameter *wine-grasp-z-offset* -0.03 "in meters")
+(defparameter *wine-pregrasp-xy-offset* 0.15 "in meters")
+(defparameter *wine-lift-z-offset* 0.15 "in meters")
+(defparameter *wine-top-grasp-x-offset* 0.00 "in meters")
+;; (defparameter *cup-eco-orange-top-grasp-z-offset* 0.02 "in meters")
+(defparameter *wine-top-grasp-z-offset* 0.1 "in meters")
+
+(defparameter *cork-top-grasp-x-offset* 0.00 "in meters")
+(defparameter *cork-top-grasp-z-offset* 0.093 "in meters")
+
+;; TOP grasp
+(man-int:def-object-type-to-gripper-transforms :cork '(:left :right) :top
+  :grasp-translation `(,(- *cork-top-grasp-x-offset*) 0.0d0 ,*cork-top-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
+  :pregrasp-offsets *lift-offset*
+  :2nd-pregrasp-offsets *lift-offset*
+  :lift-translation *lift-offset*
+  :2nd-lift-translation *lift-offset*)
+
+;; BACK grasp
+(man-int:def-object-type-to-gripper-transforms :winebottle '(:left :right) :back
+  :grasp-translation `(,*wine-grasp-xy-offset* 0.0d0 ,*wine-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*-x-across-z-grasp-rotation*
+  :pregrasp-offsets `(,(- *wine-pregrasp-xy-offset*) 0.0 ,*wine-lift-z-offset*)
+  :2nd-pregrasp-offsets `(,(- *wine-pregrasp-xy-offset*) 0.0 0.0)
+  :lift-translation `(0.0 0.0 ,*wine-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*wine-lift-z-offset*))
+
+;; FRONT grasp
+(man-int:def-object-type-to-gripper-transforms :winebottle '(:left :right) :front
+  :grasp-translation `(,(- *wine-grasp-xy-offset*) 0.0d0 ,*wine-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*x-across-z-grasp-rotation*
+  :pregrasp-offsets `(,*wine-pregrasp-xy-offset* 0.0 ,*wine-lift-z-offset*)
+  :2nd-pregrasp-offsets `(,*wine-pregrasp-xy-offset* 0.0 0.0)
+  :lift-translation `(0.0 0.0 ,*wine-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*wine-lift-z-offset*))
+
+;; SIDE grasp
+(man-int:def-object-type-to-gripper-transforms :winebottle '(:left :right) :left-side
+  :grasp-translation `(0.0d0 ,(- *wine-grasp-xy-offset*) ,*wine-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*y-across-z-grasp-rotation*
+  :pregrasp-offsets `(0.0 ,*wine-pregrasp-xy-offset* ,*wine-lift-z-offset*)
+  :2nd-pregrasp-offsets `(0.0 ,*wine-pregrasp-xy-offset* 0.0)
+  :lift-translation `(0.0 0.0 ,*wine-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*wine-lift-z-offset*))
+
+(man-int:def-object-type-to-gripper-transforms :winebottle '(:left :right) :right-side
+  :grasp-translation `(0.0d0 ,*wine-grasp-xy-offset* ,*wine-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*-y-across-z-grasp-rotation*
+  :pregrasp-offsets `(0.0 ,(- *wine-pregrasp-xy-offset*) ,*wine-lift-z-offset*)
+  :2nd-pregrasp-offsets `(0.0 ,(- *wine-pregrasp-xy-offset*) 0.0)
+  :lift-translation `(0.0 0.0 ,*wine-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*wine-lift-z-offset*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; corkscrew ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *corkscrew-top-grasp-x-offset* 0.0 "in meters")
+(defparameter *corkscrew-top-grasp-z-offset* 0.03 "in meters")
+
+;; TOP grasp
+(man-int:def-object-type-to-gripper-transforms :corkscrew '(:left :right) :top
+  :grasp-translation `(,(- *corkscrew-top-grasp-x-offset*) 0.0d0 ,*corkscrew-top-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*z-across-x-grasp-rotation*
+  :pregrasp-offsets *lift-offset*
+  :2nd-pregrasp-offsets *lift-offset*
+  :lift-translation *lift-offset*
+  :2nd-lift-translation *lift-offset*)
+
+;; (man-int:def-object-type-to-gripper-transforms :milkcap '(:left :right) :top
 ;;   :grasp-translation `(,(- *milk-top-grasp-x-offset*) 0.0d0 ,*milk-top-grasp-z-offset*)
 ;;   :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
 ;;   :pregrasp-offsets *lift-offset*
@@ -906,22 +991,6 @@
 ;;   :lift-translation *lift-offset*
 ;;   :2nd-lift-translation *lift-offset*)
 
-;; ;; TOP grasp
-;; (man-int:def-object-type-to-gripper-transforms :milk '(:left :right) :left-side
-;;   :grasp-translation `(,(- *milk-top-grasp-x-offset*) 0.0d0 ,*milk-top-grasp-z-offset*)
-;;   :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
-;;   :pregrasp-offsets *lift-offset*
-;;   :2nd-pregrasp-offsets *lift-offset*
-;;   :lift-translation *lift-offset*
-;;   :2nd-lift-translation *lift-offset*)
-
-;; (man-int:def-object-type-to-gripper-transforms :milk '(:left :right) :right-side
-;;   :grasp-translation `(,(- *milk-top-grasp-x-offset*) 0.0d0 ,*milk-top-grasp-z-offset*)
-;;   :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
-;;   :pregrasp-offsets *lift-offset*
-;;   :2nd-pregrasp-offsets *lift-offset*
-;;   :lift-translation *lift-offset*
-;;   :2nd-lift-translation *lift-offset*)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; cereal ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
