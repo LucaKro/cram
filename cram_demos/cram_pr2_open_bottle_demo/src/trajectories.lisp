@@ -508,8 +508,10 @@
               arm oTg-std)
             :orientation 
             (cl-tf:rotation to-T-to-offset)))
+         (pre-opening-poses
+           (calculate-pre-opening-trajectory (list approach-pose) target-object-name target-object-type))
          (opening-poses
-           (calculate-opening-trajectory (list approach-pose))))
+           (calculate-opening-trajectory (copy-list pre-opening-poses) target-object-name target-object-type)))
     
     (mapcar (lambda (label poses-in-base)
               (man-int:make-traj-segment
@@ -529,11 +531,13 @@
                             (cram-tf:apply-transform mTb bTg-std))))
                        poses-in-base)))
             
-            '(:approach
+            `(:approach
               :grasping
+              :pre-open
               :open)
             `((,approach-pose)
               (,approach-pose)
+              ,pre-opening-poses
               ,opening-poses))))
 
 
@@ -598,6 +602,16 @@
      "map" "base_footprint" 0
      (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0)))) ;;??
 
+(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :cork)) (arm (eql :left)) (grasp (eql :top)))
+
+  (let* ((z (cl-transforms:z
+             (cl-bullet::bounding-box-dimensions
+              (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
+    
+    (cl-transforms-stamped:make-transform-stamped
+     "map" "base_footprint" 0
+     (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0)))) 
+
 ;; (defun calculate-init-opening-pose (object arm bTg)
 ;;   (let* ((z-gripper-position-offset
 ;;            (/(cl-transforms:z
@@ -621,15 +635,49 @@
 ;;               (cdr (last result)))))
 ;;     result))
 
-(defun calculate-opening-trajectory (init-pose &optional (angle (cram-math:degrees->radians 10)))
-  (let* ((times 8)
-         (pose (first init-pose))
+(defmethod calculate-opening-trajectory (init-pose name (object-type (eql :milkbottlecap)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 36)
+         (obj-height (cl-transforms:z
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         (lift-offset (/ obj-height (* 2 times)))
          (result init-pose))
     (dotimes (n times)
-      (let ((opening-pose
-              (rotate-once-pose pose angle :z)))
-        (setf pose opening-pose)
-        (push opening-pose
-              (cdr (last result)))))
+      (let ((opening-pose (cram-tf:translate-pose
+                           (rotate-once-pose (car (last result)) angle :z)
+                           :z lift-offset)))
+        (push opening-pose (cdr (last result)))))
   result)) 
 
+(defmethod calculate-pre-opening-trajectory (init-pose name (object-type (eql :cork)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 36)
+         (obj-height (cl-transforms:z
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         (lift-offset (- (/ obj-height (* 2 times))))
+         (result init-pose))
+    (dotimes (n times)
+      (let ((opening-pose (cram-tf:translate-pose
+                           (rotate-once-pose (car (last result)) (- angle) :z)
+                           :z lift-offset)))
+
+        (push opening-pose (cdr (last result)))))
+    
+    result))
+     
+
+(defmethod calculate-opening-trajectory (init-pose name (object-type (eql :cork)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 36)
+         (obj-height (cl-transforms:z
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         (lift-offset (- (/ obj-height (* 2 times))))
+         (result (last init-pose)))
+    (dotimes (n (/ times 2))
+      (let ((opening-pose (cram-tf:translate-pose (car (last result)) :z (- (* 4 lift-offset)))))
+        (push opening-pose (cdr (last result)))))
+    
+    result))
+
+(defmethod calculate-pre-opening-trajectory (init-pose name (object-type t) &optional (angle (cram-math:degrees->radians 10)))
+  init-pose)

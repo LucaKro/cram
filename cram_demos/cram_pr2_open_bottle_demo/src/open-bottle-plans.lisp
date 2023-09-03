@@ -1235,7 +1235,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                       (desig:when ?collision-mode
                         (collision-mode ?collision-mode))))))
        ?right-open-poses)
-      (break)
+      ;;(break)
       (exe:perform (desig:an action (type opening-gripper) (gripper (right))))))
 
    (when (eq ?arm :left)
@@ -1275,30 +1275,31 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                             ((:object ?object))
                             ((:object-cap ?object-cap))
                             ((:effort ?grip-effort))
-                            ((:gripper-opening ?gripper-opening))
+                            ((:right-gripper-opening ?right-gripper-opening))
+                            ((:left-gripper-opening ?left-gripper-opening))
                             ((:right-approach-poses ?right-approach-poses))
                             ((:right-grasp-poses ?right-grasp-poses))
                             ((:left-approach-poses ?left-approach-poses))
                             ((:left-grasp-poses ?left-grasp-poses))
+                            ((:left-pre-open-poses ?left-pre-open-poses))
                             ((:left-open-poses ?left-open-poses))
                             ((:grasp ?grasp))
                           &allow-other-keys)
-
   (cpl:par
     (roslisp:ros-info (pick-place pick-up) "Opening gripper and reaching")
-    (let ((?goal-left `(cpoe:gripper-joint-at :left ,?gripper-opening))
-          (?goal-right `(cpoe:gripper-joint-at :right ,?gripper-opening)))
+    (let ((?goal-left `(cpoe:gripper-joint-at :left ,?left-gripper-opening))
+          (?goal-right `(cpoe:gripper-joint-at :right ,?right-gripper-opening)))
       (exe:perform
        (desig:an action
                  (type setting-gripper)
                  (gripper :left)
-                 (position ?gripper-opening)
+                 (position ?left-gripper-opening)
                  (goal ?goal-left)))
       (exe:perform
        (desig:an action
                  (type setting-gripper)
                  (gripper :right)
-                 (position ?gripper-opening)
+                 (position ?right-gripper-opening)
                  (goal ?goal-right))))
     (cpl:with-failure-handling
         ((common-fail:manipulation-low-level-failure (e)
@@ -1322,7 +1323,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                      (object ?object-cap)
                      (left-poses ?left-approach-poses)
                      (goal ?goal)))))))
- ; (break)
+ ;; (break)
   (roslisp:ros-info (pick-place pick-up) "Grasping")
   (cpl:with-failure-handling
       ((common-fail:manipulation-low-level-failure (e)
@@ -1348,6 +1349,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                    (goal ?goal))))))
   
   (roslisp:ros-info (pick-place pick-up) "Gripping")
+
   (cpl:par
     (let ((?goal `(cpoe:object-in-hand ,?object :right)))
       (exe:perform
@@ -1358,15 +1360,17 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                  (object ?object)
                  (grasp ?grasp)
                  (goal ?goal))))
-    (let ((?goal `(cpoe:object-in-hand ,?object-cap :left)))
-      (exe:perform
-       (desig:an action
-                 (type gripping)
-                 (gripper :left)
-                 (effort ?grip-effort)
-                 (object ?object-cap)
-                 (grasp ?grasp)
-                 (goal ?goal)))))
+
+    (unless (eq ?left-gripper-opening 0.0)
+      (let ((?goal `(cpoe:object-in-hand ,?object-cap :left)))
+        (exe:perform
+         (desig:an action
+                   (type gripping)
+                   (gripper :left)
+                   (effort ?grip-effort)
+                   (object ?object-cap)
+                   (grasp ?grasp)
+                   (goal ?goal))))))
   
   ;; (exe:perform
   ;;  (desig:an action
@@ -1377,45 +1381,48 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
   ;;              (collision-mode ?collision-mode))))
   ;; (print "lllllllllllllllllll")
   ;; (break)
+ 
+  (mapc
+   (lambda (?current-pre-left-open-poses)
+     (let ((?poses `(,?current-pre-left-open-poses)))
+       (exe:perform
+        (desig:an action
+                  (type approaching)
+                  (left-poses ?poses)
+                  (desig:when ?collision-mode
+                    (collision-mode ?collision-mode))))))
+   ?left-pre-open-poses)
+  
   (btr:detach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
-                                            (btr:object btr:*current-bullet-world* :milkbottlecap-1))
-  (dotimes (n 3)
-    (mapc
-     (lambda (?current-left-approach-poses)
-       (let ((?poses `(,?current-left-approach-poses)))
-         (print ?poses)
-         ;;(break)
-         (exe:perform
-          (desig:an action
-                    (type approaching)
-                    (left-poses ?poses)
-                    (desig:when ?collision-mode
-                      (collision-mode ?collision-mode))))))
-     ?left-approach-poses)
-    ;;(break)
-    (exe:perform
-     (desig:an action
-                  (type gripping)
-                  (gripper :left)
-                  (effort ?grip-effort)))
-    (mapc
-     (lambda (?current-left-open-poses)
-       (let ((?poses `(,?current-left-open-poses)))
-         (exe:perform
-          (desig:an action
-                    (type approaching)
-                    (left-poses ?poses)
-                       (desig:when ?collision-mode
-                         (collision-mode ?collision-mode))))))
-     ?left-open-poses)
-    (exe:perform (desig:an action (type opening-gripper) (gripper (left))))))
+                     (btr:object btr:*current-bullet-world* :milkbottlecap-1))
+  (btr:detach-object (btr:object btr:*current-bullet-world* :winebottle-1)
+                     (btr:object btr:*current-bullet-world* :cork-1))
+  (btr:attach-object (btr:object btr:*current-bullet-world* :corkscrew-1)
+                     (btr:object btr:*current-bullet-world* :cork-1))
+  ;;(break)
+  (mapc
+   (lambda (?current-left-open-poses)
+     (let ((?poses `(,?current-left-open-poses)))
+       (exe:perform
+        (desig:an action
+                  (type approaching)
+                  (left-poses ?poses)
+                  (desig:when ?collision-mode
+                    (collision-mode ?collision-mode))))))
+   ?left-open-poses)
+  ;;(exe:perform (desig:an action (type opening-gripper) (gripper (left))))
+  )
 
 
 (def-fact-group my-actions (desig:action-grounding)
   (<- (desig:action-grounding ?action-designator (2hand-bottle-func ?resolved-action-designator))
     (spec:property ?action-designator (:type :2hand-bottle))
     (spec:property ?action-designator (:object ?bottle))
-    (spec:property ?action-designator (:object-cap ?object-cap))
+    (-> (spec:property ?action-designator (:object-cap ?object-cap))
+        (spec:property ?action-designator (:object-cap ?object-cap))
+        (lisp-fun get-object-lid ?bottle ?object-cap))
+
+    (spec:property ?object-cap (:type ?object-cap-type))
 
     (desig:current-designator ?bottle ?current-object-desig)
     (spec:property ?current-object-desig (:type ?object-type))
@@ -1438,13 +1445,16 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
         (true)
         (and (lisp-fun man-int:get-action-grasps ?object-type '(:right) ?object-transform ?grasps)
              (member ?grasp ?grasps)))
-    
+
     (lisp-fun man-int:get-action-gripping-effort ?object-type ?effort)
-    (lisp-fun man-int:get-action-gripper-opening ?object-type ?gripper-opening)
-    
+    (lisp-fun man-int:get-action-gripper-opening ?object-cap-type ?left-gripper-opening)
+    (lisp-fun man-int:get-action-gripper-opening ?object-type ?right-gripper-opening)
+
     (and (lisp-fun man-int:get-action-trajectory :open-bottle :left ?grasp T ?object-cap ?pose)
          (lisp-fun man-int:get-traj-poses-by-label ?pose :open
                    ?left-open-poses)
+         (lisp-fun man-int:get-traj-poses-by-label ?pose :pre-open
+                   ?left-pre-open-poses)
          (lisp-fun man-int:get-traj-poses-by-label ?pose :approach
                    ?left-approach-poses)
          (lisp-fun man-int:get-traj-poses-by-label ?pose :grasping
@@ -1454,18 +1464,19 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
     ;; (equal ?left-grasp-poses nil)
     ;; (equal ?right-grasp-poses nil)
     ;; (equal ?right-approach-poses nil)
+
     (and (lisp-fun man-int:get-action-trajectory :open-bottle :right ?grasp T ?bottle
                    ?right-trajectory)
          (lisp-fun man-int:get-traj-poses-by-label ?right-trajectory :approach
                    ?right-approach-poses)
          (lisp-fun man-int:get-traj-poses-by-label ?right-trajectory :grasping
                    ?right-grasp-poses))
-    
+
     (-> (desig:desig-prop ?action-designator (:collision-mode ?collision-mode))
         (true)
         (equal ?collision-mode NIL))
 
-    (lisp-fun man-int:get-action-gripping-effort :milk ?effort)
+    ;;(lisp-fun man-int:get-action-gripping-effort :milk ?effort)
 
     ;; (and (format "WARNING: Please specify with an arm which ooooooooooooooooooooooooooooo")
     ;;      (fail))
@@ -1474,13 +1485,15 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                                (:object ?current-object-desig)
                                (:object-cap ?object-cap)
                                (:collision-mode ?collision-mode)
-                               (:gripper-opening ?gripper-opening)
+                               (:right-gripper-opening ?right-gripper-opening)
+                               (:left-gripper-opening ?left-gripper-opening)
                                (:effort ?effort)
                                (:grasp ?grasp)
                                (:right-approach-poses ?right-approach-poses)
                                (:right-grasp-poses ?right-grasp-poses)
                                (:left-approach-poses ?left-approach-poses)
                                (:left-grasp-poses ?left-grasp-poses)
+                               (:left-pre-open-poses ?left-pre-open-poses)
                                (:left-open-poses ?left-open-poses))
                       ?resolved-action-designator)))
 
@@ -1693,20 +1706,30 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
 
 ;; TODO
 ;; find a way to lookup transform from map to base_footprint
-;; (defun get-object-cap (object)
-;;   (let* ((bullet-obj (btr:object btr:*current-bullet-world* (desig:desig-prop-value object :name)))
-;;          (bullet-cap (btr:object btr:*current-bullet-world* (car (car (btr:attached-objects bullet-obj))))) (?cap-type (btr:item-types bullet-cap))
-;;          (?cap-name (btr:name bullet-cap))
-;;          (frame (name->frame ?cap-name))
-;;          (pose-in-map (cl-tf:pose->pose-stamped "map" 0 (btr:pose bullet-cap)))
-;;          (transform-in-map (cram-tf:pose-stamped->transform-stamped pose-in-map frame))
-;;          (pose)
-;;          (transform)
+(defun get-object-lid (object)
+  (let* ((bullet-obj (btr:object btr:*current-bullet-world* (desig:desig-prop-value object :name)))
+         (bullet-cap (btr:object btr:*current-bullet-world* (car (car (btr:attached-objects bullet-obj))))) (?cap-type (car (btr:item-types bullet-cap)))
+         (?cap-name (btr:name bullet-cap))
+         (frame (name->frame ?cap-name))
+         (pose-in-map (cl-tf:pose->pose-stamped "map" 0 (btr:pose bullet-cap)))
+         (transform-in-map (cram-tf:pose-stamped->transform-stamped pose-in-map frame))
+         (transform (lookup-transform-using-map pose-in-map (btr:pose (btr:get-robot-object)) "base_footprint" frame))
+         (pose (cram-tf:transform->pose-stamped "base_footprint" 0 transform))
          
-;;          (?cap-pose `((:pose )
-;;                       (:transform)
-;;                       (:pose-in-map ,(btr:pose bullet-cap))
-;;                       ())))
-;;          (desig:an object (type ))))
+         (?cap-pose `((:pose ,pose)
+                      (:transform ,transform)
+                      (:pose-in-map ,pose-in-map)
+                      (:transform-in-map ,transform-in-map))))
+    (desig:an object
+              (type ?cap-type)
+              (name ?cap-name)
+              (pose ?cap-pose))))
 
-         
+(defun lookup-transform-using-map (pose-stamped1 pose-stamped2 parent-frame child-frame)
+  (let ((rel-translation (cl-tf:v- (cl-tf:origin pose-stamped1) (cl-tf:origin pose-stamped2))))
+    (multiple-value-bind(angle axis)
+        (cl-tf:angle-between-quaternions (cl-tf:orientation pose-stamped1) (cl-tf:orientation pose-stamped2))
+      (cl-tf:make-transform-stamped
+       parent-frame child-frame 0
+       rel-translation
+       (cl-tf:axis-angle->quaternion axis angle)))))

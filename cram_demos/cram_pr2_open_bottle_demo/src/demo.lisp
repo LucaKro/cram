@@ -217,13 +217,45 @@
    (cl-transforms:make-3d-vector 1.25d0 0d0 0d0)
    (cl-transforms:make-quaternion 0.0d0 0.0d0 0.8d0 0.0d0)))
 
-(defun start (?grasping-arm)
+(defun pickup-corkscrew ()
+  ;; (urdf-proj:with-simulated-robot
+  ;;   (btr-utils:kill-all-objects)
+  ;;   (park-robot)
+    (btr-utils:spawn-object :corkscrew-1 :corkscrew
+                            :pose (cl-transforms:make-pose
+                                   (cl-tf:make-3d-vector 1.4d0 0.65d0 0.89)
+                                   (cl-tf:make-identity-rotation)))
+    (let ((?navigation-goal *base-pose-bottle*))
+      (exe:perform (desig:an action
+                             (type going)
+                             (target (desig:a location 
+                                              (pose ?navigation-goal))))))
+    
+    (let ((?looking-direction *bottle-location-pose*))
+      (exe:perform (desig:an action 
+                             (type looking)
+                             (target (desig:a location 
+                                              (pose ?looking-direction))))))
+
+    (let* ((?perceived-object (urdf-proj::detect (desig:an object (type :corkscrew)))))
+      (exe:perform (desig:an action
+                             (type picking-up)
+                             (object ?perceived-object)
+                             (arm (:left)) 
+                             (grasp :top)))));;)
+
+(defun start (object)
   ;; (btr-utils:spawn-object 'milk-1 :milk
   ;;                                :pose (cl-transforms:make-pose
   ;;                                       (cl-tf:make-3d-vector 1.34 0.6 0.95)
   ;;                                       (cl-tf:make-identity-rotation)))
-  (spawn-objects-on-sink-counter)
+  (spawn-objects-on-sink-counter :object-types (case object
+                                                 (:wine '(:winebottle :corkscrew))
+                                                 (:milk '(:milkbottle))))
   (urdf-proj:with-simulated-robot
+    (park-robot)
+    (when (eq object :wine)
+      (pickup-corkscrew))
     (let ((?navigation-goal *base-pose-bottle*))
       (exe:perform (desig:an action
                              (type going)
@@ -237,11 +269,16 @@
                                               (pose ?looking-direction))))))
 
 
-    (let ((?opening-arm (cond
-                         ((eql ?grasping-arm :right) :left)
-                         ((eql ?grasping-arm :left) :right)))
-          (?perceived-object (urdf-proj::detect (desig:an object (type :milkbottle))))
-          (?perceived-object-cap (urdf-proj::detect (desig:an object (type :milkbottlecap)))))
+    (let* ((?type (case object
+                     (:wine :winebottle)
+                     (:milk :milkbottle)))
+           (?cap-type (case object
+                        (:wine nil)
+                        (:milk :milkbottlecap)))
+           (?perceived-object (urdf-proj::detect (desig:an object (type ?type))))
+           (?perceived-object-cap (when ?cap-type
+                                    (urdf-proj::detect (desig:an object (type ?cap-type)))))
+          )
       (cpl:with-retry-counters ((grasping-retry 3))
         (cpl:with-failure-handling
             ((common-fail:low-level-failure
@@ -263,14 +300,15 @@
            (desig:an action
                      (type 2hand-bottle)
                      (object ?perceived-object)
-                     (object-cap ?perceived-object-cap)
+                     (when ?perceived-object-cap
+                       (object-cap ?perceived-object-cap))
                      ))
-          ))
+          )))))
       
-      (break)
-      (exe:perform
-       (desig:an action
-                 (type bottle)
-                 (arm ?opening-arm)
-                 (object ?perceived-object)
-                 )))))
+      ;; (break)
+      ;; (exe:perform
+      ;;  (desig:an action
+      ;;            (type bottle)
+      ;;            (arm ?opening-arm)
+      ;;            (object ?perceived-object)
+      ;;            )))))

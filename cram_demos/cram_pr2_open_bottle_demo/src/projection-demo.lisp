@@ -33,10 +33,12 @@
   '("sink_area_surface"
     ((:breakfast-cereal . ((0.2 -0.15 0.1) (0 0 0 1)))
      (:cup . ((0.2 -0.35 0.1) (0 0 0 1)))
-     (:bowl . ((0.18 -0.55 0.1) (0 0 0 1)))
+     (:bowl . ((0.18 -0.55 0.15) (0 0 0 1)))
      (:spoon . ((0.15 -0.4 -0.05) (0 0 0 1)))
      (:milk . ((0.17 -0.35 0.1) (0 0 0 1)))
-     (:milkbottle . ((0.17 -0.15 0.1) (0 0 0 1)))))
+     (:milkbottle . ((0.17 -0.15 0.1) (0 0 0 1)))
+     (:winebottle . ((0.17 -0.15 0.1) (0 0 0 1)))
+     (:corkscrew . ((0.17 -0.35 0.1) (0 0 0 1)))))
   "Relative poses on sink area")
 
 (defparameter *object-placing-poses*
@@ -103,12 +105,15 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
                                                         ;; :cup
                                                         ;; :bowl
                                                         ;; :spoon
-                                                        ;; milk
-                                                        :milkbottle))
+                                                        ;; :milk
+                                                        :milkbottle
+                                                        ;; :corkscrew
+                                                        ;; :winebottle
+                                                        ))
                                         (spawning-poses-relative *object-spawning-poses*)
                                         (random NIL))
   ;; make sure mesh paths are known, kill old objects and destroy all attachments
-  (btr:add-objects-to-mesh-list "cram_pr2_pick_place_demo")
+  (btr:add-objects-to-mesh-list "cram_pr2_open_bottle_demo")
   (btr-utils:kill-all-objects)
   (btr:detach-all-objects (btr:get-robot-object))
   (btr:detach-all-objects (btr:get-environment-object))
@@ -161,15 +166,6 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
                               (cram-tf:rotate-pose object-pose
                                                    :z (/ (* 2 pi) (random 10.0)))))
 
-                       (when (btr:object btr:*current-bullet-world* :milkbottle-1)
-                         (btr-utils:spawn-object :milkbottlecap-1 :milkbottlecap
-                                                 :pose (cram-tf:translate-pose (btr:object-pose :milkbottle-1)
-                                                                               :x -0.00
-                                                                               :y -0.002
-                                                                               :z 0.095))            
-                         (btr:attach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
-                                            (btr:object btr:*current-bullet-world* :milkbottlecap-1)))
-                       ;;(break)
                        ;; move object to calculated pose on surface
                        (btr-utils:move-object object-name rotated-object-pose)
                        ;; return object
@@ -188,7 +184,27 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
 
     ;; stabilize world
     (btr:simulate btr:*current-bullet-world* 100)
-    
+
+    (when (btr:object btr:*current-bullet-world* :milkbottle-1)
+      (let* ((milk-map-transf (cram-tf:pose->transform-stamped "map" "milkbottle_1" 0  (btr:object-pose :milkbottle-1)))
+             (milk-cap-transf (cl-tf:make-transform-stamped "milkbottle_1" "milkbottle_1" 0 (cl-tf:make-3d-vector 0 -0.0025 0.095) (cl-tf:make-identity-rotation)))
+             (cap-pose (cram-tf:apply-transform milk-map-transf milk-cap-transf :result-as-pose-or-transform :pose)))
+
+        (btr-utils:spawn-object :milkbottlecap-1 :milkbottlecap
+                                :pose cap-pose)            
+        (btr:attach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
+                           (btr:object btr:*current-bullet-world* :milkbottlecap-1))))
+
+    (when (btr:object btr:*current-bullet-world* :winebottle-1)
+      
+      (let* ((wine-map-transf (cram-tf:pose->transform-stamped "map" "winebottle_1" 0  (btr:object-pose :winebottle-1)))
+             (wine-cap-transf (cl-tf:make-transform-stamped "winebottle_1" "winebottle_1" 0 (cl-tf:make-3d-vector 0 0 0.097) (cl-tf:make-identity-rotation))) ;; 0.14 can be perceived, 0.097 cork is just sticking out
+             (cork-pose (cram-tf:apply-transform wine-map-transf wine-cap-transf :result-as-pose-or-transform :pose)))
+      (btr-utils:spawn-object :cork-1 :cork
+                              :pose cork-pose)
+      ;;(break)
+      (btr:attach-object (btr:object btr:*current-bullet-world* :winebottle-1)
+                         (btr:object btr:*current-bullet-world* :cork-1))))
     ;; return list of BTR objects
     objects))
 
