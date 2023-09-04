@@ -217,32 +217,38 @@
    (cl-transforms:make-3d-vector 1.25d0 0d0 0d0)
    (cl-transforms:make-quaternion 0.0d0 0.0d0 0.8d0 0.0d0)))
 
-(defun pickup-corkscrew ()
+(defun pickup-opener (object)
   ;; (urdf-proj:with-simulated-robot
   ;;   (btr-utils:kill-all-objects)
   ;;   (park-robot)
-    (btr-utils:spawn-object :corkscrew-1 :corkscrew
-                            :pose (cl-transforms:make-pose
-                                   (cl-tf:make-3d-vector 1.4d0 0.65d0 0.89)
-                                   (cl-tf:make-identity-rotation)))
-    (let ((?navigation-goal *base-pose-bottle*))
-      (exe:perform (desig:an action
-                             (type going)
-                             (target (desig:a location 
-                                              (pose ?navigation-goal))))))
-    
-    (let ((?looking-direction *bottle-location-pose*))
-      (exe:perform (desig:an action 
-                             (type looking)
-                             (target (desig:a location 
-                                              (pose ?looking-direction))))))
+    (let((?type (case object
+                  (:wine :corkscrew)
+                  (:beer :bottleopener)))
+         (?name (case object
+                  (:wine :corkscrew-1)
+                  (:beer :bottleopener-1))))
+      (btr-utils:spawn-object ?name ?type
+                              :pose (cl-transforms:make-pose
+                                     (cl-tf:make-3d-vector 1.4d0 0.65d0 0.89)
+                                     (cl-tf:make-identity-rotation)))
+      (let ((?navigation-goal *base-pose-bottle*))
+        (exe:perform (desig:an action
+                               (type going)
+                               (target (desig:a location 
+                                                (pose ?navigation-goal))))))
+      
+      (let ((?looking-direction *bottle-location-pose*))
+        (exe:perform (desig:an action 
+                               (type looking)
+                               (target (desig:a location 
+                                                (pose ?looking-direction))))))
 
-    (let* ((?perceived-object (urdf-proj::detect (desig:an object (type :corkscrew)))))
-      (exe:perform (desig:an action
-                             (type picking-up)
-                             (object ?perceived-object)
-                             (arm (:left)) 
-                             (grasp :top)))));;)
+      (let* ((?perceived-object (urdf-proj::detect (desig:an object (type ?type)))))
+        (exe:perform (desig:an action
+                               (type picking-up)
+                               (object ?perceived-object)
+                               (arm (:left)) 
+                               (grasp :top))))));;)
 
 (defun start (object)
   ;; (btr-utils:spawn-object 'milk-1 :milk
@@ -251,11 +257,13 @@
   ;;                                       (cl-tf:make-identity-rotation)))
   (spawn-objects-on-sink-counter :object-types (case object
                                                  (:wine '(:winebottle :corkscrew))
-                                                 (:milk '(:milkbottle))))
+                                                 (:milk '(:milkbottle))
+                                                 (:beer '(:beerbottle :bottleopener))))
   (urdf-proj:with-simulated-robot
     (park-robot)
-    (when (eq object :wine)
-      (pickup-corkscrew))
+    (when (or (eq object :wine)
+              (eq object :beer))
+      (pickup-opener object))
     (let ((?navigation-goal *base-pose-bottle*))
       (exe:perform (desig:an action
                              (type going)
@@ -271,10 +279,12 @@
 
     (let* ((?type (case object
                      (:wine :winebottle)
-                     (:milk :milkbottle)))
+                     (:milk :milkbottle)
+                     (:beer :beerbottle)))
            (?cap-type (case object
                         (:wine nil)
-                        (:milk :milkbottlecap)))
+                        (:milk :milkbottlecap)
+                        (:beer :beerbottlecap)))
            (?perceived-object (urdf-proj::detect (desig:an object (type ?type))))
            (?perceived-object-cap (when ?cap-type
                                     (urdf-proj::detect (desig:an object (type ?cap-type)))))

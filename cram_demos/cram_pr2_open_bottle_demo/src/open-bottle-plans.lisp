@@ -1399,6 +1399,10 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                      (btr:object btr:*current-bullet-world* :cork-1))
   (btr:attach-object (btr:object btr:*current-bullet-world* :corkscrew-1)
                      (btr:object btr:*current-bullet-world* :cork-1))
+  (btr:detach-object (btr:object btr:*current-bullet-world* :beerbottle-1)
+                     (btr:object btr:*current-bullet-world* :beerbottlecap-1))
+  (btr:attach-object (btr:object btr:*current-bullet-world* :bottleopener-1)
+                     (btr:object btr:*current-bullet-world* :beerbottlecap-1))
   ;;(break)
   (mapc
    (lambda (?current-left-open-poses)
@@ -1434,18 +1438,18 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
     
  
     (lisp-fun man-int:get-object-transform ?current-object-desig ?object-transform)
-
+   
     ;; infer missing information like ?grasp type, gripping ?maximum-effort, manipulation poses
     (lisp-fun man-int:calculate-object-faces ?object-transform (?facing-robot-face ?bottom-face))
     (-> (man-int:object-rotationally-symmetric ?object-type)
         (equal ?rotationally-symmetric t)
         (equal ?rotationally-symmetric nil))
-
+    
     (-> (spec:property ?action-designator (:grasp ?grasp))
         (true)
         (and (lisp-fun man-int:get-action-grasps ?object-type '(:right) ?object-transform ?grasps)
              (member ?grasp ?grasps)))
-
+    
     (lisp-fun man-int:get-action-gripping-effort ?object-type ?effort)
     (lisp-fun man-int:get-action-gripper-opening ?object-cap-type ?left-gripper-opening)
     (lisp-fun man-int:get-action-gripper-opening ?object-type ?right-gripper-opening)
@@ -1460,6 +1464,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
          (lisp-fun man-int:get-traj-poses-by-label ?pose :grasping
                    ?left-grasp-poses))
     ;; (equal ?left-open-poses nil)
+    ;; (equal ?left-pre-open-poses nil)
     ;; (equal ?left-approach-poses nil)
     ;; (equal ?left-grasp-poses nil)
     ;; (equal ?right-grasp-poses nil)
