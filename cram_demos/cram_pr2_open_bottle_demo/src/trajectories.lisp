@@ -698,7 +698,7 @@
                                                     ;;(car init-pose))
                                       (cl-tf:make-3d-vector 0
                                                             ;;0
-                                                            0.01
+                                                            0.005
                                                             (+ (/ obj-height 2)
                                                                (cl-tf:z (cl-tf:translation transf)))))
                     :orientation (cl-tf:make-quaternion 0.5 0.5 -0.5 0.5))))
