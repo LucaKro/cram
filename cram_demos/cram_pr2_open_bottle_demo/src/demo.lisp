@@ -218,15 +218,18 @@
    (cl-transforms:make-quaternion 0.0d0 0.0d0 0.8d0 0.0d0)))
 
 (defun pickup-opener (object)
+  
   ;; (urdf-proj:with-simulated-robot
   ;;   (btr-utils:kill-all-objects)
   ;;   (park-robot)
     (let((?type (case object
                   (:wine :corkscrew)
-                  (:beer :bottleopener)))
+                  (:beer :bottleopener)
+                  (:beer-tall :bottleopener)))
          (?name (case object
                   (:wine :corkscrew-1)
-                  (:beer :bottleopener-1))))
+                  (:beer :bottleopener-1)
+                  (:beer-tall :bottleopener-1))))
       (btr-utils:spawn-object ?name ?type
                               :pose (cl-transforms:make-pose
                                      (cl-tf:make-3d-vector 1.4d0 0.65d0 0.89)
@@ -258,11 +261,15 @@
   (spawn-objects-on-sink-counter :object-types (case object
                                                  (:wine '(:winebottle :corkscrew))
                                                  (:milk '(:milkbottle))
-                                                 (:beer '(:beerbottle :bottleopener))))
+                                                 (:milkpack '(:milkpack))
+                                                 (:juice '(:albihimbeerjuice))
+                                                 (:beer '(:beerbottle :bottleopener))
+                                                 (:beer-tall '(:beerbottle-tall :bottleopener))))
   (urdf-proj:with-simulated-robot
     (park-robot)
     (when (or (eq object :wine)
-              (eq object :beer))
+              (eq object :beer)
+              (eq object :beer-tall))
       (pickup-opener object))
     (let ((?navigation-goal *base-pose-bottle*))
       (exe:perform (desig:an action
@@ -280,11 +287,17 @@
     (let* ((?type (case object
                      (:wine :winebottle)
                      (:milk :milkbottle)
-                     (:beer :beerbottle)))
+                     (:milkpack :milkpack)
+                     (:juice :albihimbeerjuice)
+                     (:beer :beerbottle)
+                     (:beer-tall :beerbottle-tall)))
            (?cap-type (case object
                         (:wine nil)
                         (:milk :milkbottlecap)
-                        (:beer :beerbottlecap)))
+                        (:milkpack :milkpackcap)
+                        (:juice :albihimbeerjuicecap)
+                        (:beer :beerbottlecap)
+                        (:beer-tall :beerbottlecap-tall)))
            (?perceived-object (urdf-proj::detect (desig:an object (type ?type))))
            (?perceived-object-cap (when ?cap-type
                                     (urdf-proj::detect (desig:an object (type ?cap-type)))))

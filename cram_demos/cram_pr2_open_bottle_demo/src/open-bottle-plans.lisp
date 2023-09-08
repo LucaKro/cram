@@ -1285,6 +1285,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                             ((:left-open-poses ?left-open-poses))
                             ((:grasp ?grasp))
                           &allow-other-keys)
+  ;;(break)
   (cpl:par
     (roslisp:ros-info (pick-place pick-up) "Opening gripper and reaching")
     (let ((?goal-left `(cpoe:gripper-joint-at :left ,?left-gripper-opening))
@@ -1347,7 +1348,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                    (object ?object-cap)
                    (left-poses ?left-grasp-poses)
                    (goal ?goal))))))
-  
+
   (roslisp:ros-info (pick-place pick-up) "Gripping")
 
   (cpl:par
@@ -1379,8 +1380,8 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
   ;;            (right-poses ?right-approach-poses)
   ;;            (desig:when ?collision-mode
   ;;              (collision-mode ?collision-mode))))
-  ;; (print "lllllllllllllllllll")
-  ;; (break)
+  ;;(print "lllllllllllllllllll")
+  ;;(break)
  
   (mapc
    (lambda (?current-pre-left-open-poses)
@@ -1392,17 +1393,30 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
                   (desig:when ?collision-mode
                     (collision-mode ?collision-mode))))))
    ?left-pre-open-poses)
+  (break)
+  ;; (btr:detach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
+  ;;                    (btr:object btr:*current-bullet-world* :milkbottlecap-1))
+
+  (btr:detach-object (btr:object btr:*current-bullet-world* :milkpack-1)
+                     (btr:object btr:*current-bullet-world* :milkpackcap-1))
+
+  ;; (btr:detach-object (btr:object btr:*current-bullet-world* :albihimbeerjuice-1)
+  ;;                    (btr:object btr:*current-bullet-world* :albihimbeerjuicecap-1))
   
-  (btr:detach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
-                     (btr:object btr:*current-bullet-world* :milkbottlecap-1))
-  (btr:detach-object (btr:object btr:*current-bullet-world* :winebottle-1)
-                     (btr:object btr:*current-bullet-world* :cork-1))
-  (btr:attach-object (btr:object btr:*current-bullet-world* :corkscrew-1)
-                     (btr:object btr:*current-bullet-world* :cork-1))
-  (btr:detach-object (btr:object btr:*current-bullet-world* :beerbottle-1)
-                     (btr:object btr:*current-bullet-world* :beerbottlecap-1))
-  (btr:attach-object (btr:object btr:*current-bullet-world* :bottleopener-1)
-                     (btr:object btr:*current-bullet-world* :beerbottlecap-1))
+  ;; (btr:detach-object (btr:object btr:*current-bullet-world* :winebottle-1)
+  ;;                    (btr:object btr:*current-bullet-world* :cork-1))
+  ;; (btr:attach-object (btr:object btr:*current-bullet-world* :corkscrew-1)
+  ;;                    (btr:object btr:*current-bullet-world* :cork-1))
+  
+  ;; (btr:detach-object (btr:object btr:*current-bullet-world* :beerbottle-1)
+  ;;                    (btr:object btr:*current-bullet-world* :beerbottlecap-1))
+  ;; (btr:attach-object (btr:object btr:*current-bullet-world* :bottleopener-1)
+  ;;                    (btr:object btr:*current-bullet-world* :beerbottlecap-1))
+  
+  ;; (btr:detach-object (btr:object btr:*current-bullet-world* :beerbottle-tall-1)
+  ;;                    (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1))
+  ;; (btr:attach-object (btr:object btr:*current-bullet-world* :bottleopener-1)
+  ;;                    (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1))
   ;;(break)
   (mapc
    (lambda (?current-left-open-poses)
@@ -1453,7 +1467,7 @@ and using the grasp and arm specified in `remove-cap-action' (if not NIL)."
     (lisp-fun man-int:get-action-gripping-effort ?object-type ?effort)
     (lisp-fun man-int:get-action-gripper-opening ?object-cap-type ?left-gripper-opening)
     (lisp-fun man-int:get-action-gripper-opening ?object-type ?right-gripper-opening)
-
+    
     (and (lisp-fun man-int:get-action-trajectory :open-bottle :left ?grasp T ?object-cap ?pose)
          (lisp-fun man-int:get-traj-poses-by-label ?pose :open
                    ?left-open-poses)

@@ -495,7 +495,8 @@
            (cram-tf:copy-transform-stamped
             (man-int:get-object-type-to-gripper-transform
              target-object-type target-object-name arm side)
-            :rotation (cl-tf:make-identity-rotation)))
+            :rotation (cl-tf:make-identity-rotation)
+            ))
 
          (approach-pose
            (cl-tf:copy-pose-stamped 
@@ -512,6 +513,8 @@
            (calculate-pre-opening-trajectory (list approach-pose) target-object-name target-object-type))
          (opening-poses
            (calculate-opening-trajectory (copy-list pre-opening-poses) target-object-name target-object-type)))
+
+    
     
     (mapcar (lambda (label poses-in-base)
               (man-int:make-traj-segment
@@ -578,19 +581,22 @@
               (,oTg-std)))))
 
 
-(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :milk)) (arm (eql :right)) (grasp (eql :top)))
+;; (defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :milk)) (arm (eql :right)) (grasp (eql :top)))
 
-  (let* ((z (cl-transforms:z
-             (cl-bullet::bounding-box-dimensions
-              (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
+;;   (let* ((z (cl-transforms:z
+;;              (cl-bullet::bounding-box-dimensions
+;;               (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
     
-    (cl-transforms-stamped:make-transform-stamped
-     "map" "base_footprint" 0
-     (cl-tf:make-3d-vector  0 0 0.00
-                           ;; 0 0 (/ z 2)
-                            )
-     (cl-tf:make-quaternion 1 0 -1 0))))
+;;     (cl-transforms-stamped:make-transform-stamped
+;;      "map" "base_footprint" 0
+;;      (cl-tf:make-3d-vector  0 0 0.00
+;;                            ;; 0 0 (/ z 2)
+;;                             )
+;;      (cl-tf:make-quaternion 1 0 -1 0))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; milkbottlecap ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :milkbottlecap)) (arm (eql :left)) (grasp (eql :top)))
 
@@ -601,50 +607,6 @@
     (cl-transforms-stamped:make-transform-stamped
      "map" "base_footprint" 0
      (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0))));;??
-
-(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :beerbottlecap)) (arm (eql :left)) (grasp (eql :top)))
-
-  (let* ((rot (cl-tf:make-quaternion  0.37 0.37 -0.603 0.603))
-         (obj-radius (cl-transforms:x
-                      (cl-bullet::bounding-box-dimensions
-                       (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
-
-    (cl-transforms-stamped:make-transform-stamped
-     "map" "base_footprint" 0
-     (cl-tf:make-3d-vector 0 (+ 0.09 obj-radius) -0.135) rot)))
-
-(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :cork)) (arm (eql :left)) (grasp (eql :top)))
-
-  (let* ((z (cl-transforms:z
-             (cl-bullet::bounding-box-dimensions
-              (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
-    
-    (cl-transforms-stamped:make-transform-stamped
-     "map" "base_footprint" 0
-     (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0)))) 
-
-;; (defun calculate-init-opening-pose (object arm bTg)
-;;   (let* ((z-gripper-position-offset
-;;            (/(cl-transforms:z
-;;               (cl-bullet::bounding-box-dimensions
-;;                (btr:aabb object)))
-;;              2)))
-;;     (translate-pose-in-base 
-;;      bTg
-;;      :z-offset z-gripper-position-offset)))
-
-
-;; (defun calculate-opening-trajectory (init-pose &optional (angle (cram-math:degrees->radians 50)))
-;;   (let* ((times (ceiling (* 2 (/ (* 2 pi) angle))))
-;;          (pose (first init-pose))
-;;          (result init-pose))
-;;     (dotimes (n times)
-;;       (let ((opening-pose
-;;               (rotate-once-pose pose (- angle) :z)))
-;;         (setf pose opening-pose)
-;;         (push opening-pose
-;;               (cdr (last result)))))
-;;     result))
 
 (defmethod calculate-opening-trajectory (init-pose name (object-type (eql :milkbottlecap)) &optional (angle (cram-math:degrees->radians 10)))
   (let* ((times 36)
@@ -660,9 +622,109 @@
         (push opening-pose (cdr (last result)))))
     result))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; albihimbeerjuicecap ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :albihimbeerjuicecap)) (arm (eql :left)) (grasp (eql :top)))
+
+  (let* ((z (cl-transforms:z
+             (cl-bullet::bounding-box-dimensions
+              (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
+    
+    (cl-transforms-stamped:make-transform-stamped
+     "map" "base_footprint" 0
+     (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0))));;??
+
+(defmethod calculate-opening-trajectory (init-pose name (object-type (eql :albihimbeerjuicecap)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 36)
+         (obj-height (cl-transforms:z
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         (lift-offset (/ obj-height (* 2 times)))
+         (result init-pose))
+    (dotimes (n times)
+      (let ((opening-pose (cram-tf:translate-pose
+                           (rotate-once-pose (car (last result)) angle :z)
+                           :z lift-offset)))
+        (push opening-pose (cdr (last result)))))
+    result))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; milkpackcap ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :milkpackcap)) (arm (eql :left)) (grasp (eql :top)))
+  
+  (let* ((z (cl-transforms:z
+             (cl-bullet::bounding-box-dimensions
+              (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         (std-transf (cl-transforms-stamped:make-transform-stamped
+                      "map" "base_footprint" 0
+                      (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0)))
+         (obj-rot (cl-tf:make-transform-stamped "base_footprint" "base_footprint" 0 (cl-tf:make-3d-vector 0.0 0 0.0)
+                                        (cl-tf:orientation (btr:pose  (btr:object btr:*current-bullet-world* name))))))
+
+    (cram-tf:apply-transform obj-rot std-transf)))
+    
+    ;; (cl-transforms-stamped:make-transform-stamped
+    ;;  "map" "base_footprint" 0
+    ;;  (cl-tf:make-3d-vector 0.0 0 0.0) obj-rot)));;??
+
+(defmethod calculate-opening-trajectory (init-pose name (object-type (eql :milkpackcap)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 36)
+         (obj-height (cl-transforms:z
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         (lift-offset (/ obj-height (* 2 times)))
+         (result init-pose)
+         (new-pose (cram-tf:apply-transform
+                    (cram-tf:pose-stamped->transform-stamped (car (last result)) "base_footprint")
+                    (cl-transforms-stamped:make-transform-stamped
+                      "map" "base_footprint" 0
+                      (cl-tf:make-3d-vector -0.1 0 0.0) (cl-tf:orientation (car (last result)))))))
+    
+    (dotimes (n times)
+      (let* ((offset-transf (cram-tf:apply-transform
+                             (cram-tf:pose-stamped->transform-stamped (car (last result)) "base_footprint")
+                             (cl-transforms-stamped:make-transform-stamped
+                              "map" "base_footprint" 0
+                              (cl-tf:make-3d-vector (- lift-offset) 0 0.0) (cl-tf:orientation (car (last result))))))
+             (opening-pose (cl-tf:make-pose-stamped "base_footprint" 0
+                                                    (cl-tf:translation offset-transf)
+                                                    (cl-tf:orientation (cram-tf:rotate-pose-in-own-frame (car (last result)) :x  (- angle))))))
+                           ;;:z lift-offset)))
+        (push opening-pose (cdr (last result)))))
+    result))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; beerbottlecap ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :beerbottlecap)) (arm (eql :left)) (grasp (eql :top)))
+
+  (let* ((rot (cl-tf:make-quaternion  0.37 0.37 -0.603 0.603))
+         (obj-radius (cl-transforms:x
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
+
+    (cl-transforms-stamped:make-transform-stamped
+     "map" "base_footprint" 0
+     (cl-tf:make-3d-vector 0 (+ 0.09 obj-radius) -0.135) rot)))
+
+(defmethod calculate-pre-opening-trajectory (init-pose name (object-type (eql :beerbottlecap)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 8)
+         (obj-radius (cl-transforms:x
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         (shift-offset (+ (/ obj-radius (* 2 times))))
+         (result (last init-pose)))
+    (dotimes (n (/ times 1))
+      (let ((opening-pose (cram-tf:translate-pose (car (last result)) :y (- (* 2 shift-offset)))))
+        (push opening-pose (cdr (last result)))))
+    
+    result))
+
 (defmethod calculate-opening-trajectory (init-pose name (object-type (eql :beerbottlecap)) &optional (angle (cram-math:degrees->radians 10)))
   (let* ((times 10)
-         (obj-pose (btr:pose  (btr:object btr:*current-bullet-world* :beerbottlecap-1)))
+         (obj-pose (btr:pose  (btr:object btr:*current-bullet-world* name)))
          (obj-height (cl-transforms:z
                       (cl-bullet::bounding-box-dimensions
                        (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
@@ -681,16 +743,6 @@
                   obj-pose
                   (cram-tf:apply-transform mTb (cram-tf:pose-stamped->transform-stamped (car init-pose) "beerbottlecap_1") :result-as-pose-or-transform :pose) "bottleopener_1" "beerbottlecap_1"))
          
-         ;; (transl-pose (cram-tf:translate-pose (car init-pose)
-         ;;                                      :x (cl-tf:x (cl-tf:translation transf))
-         ;;                                      :y (cl-tf:y (cl-tf:translation transf))
-         ;;                                      :z (cl-tf:z (cl-tf:translation transf))))
-
-         ;; (rot-pose (cram-tf:rotate-transform-in-own-frame transf :y 0.01))
-         
-         ;; (applied-transf rot-pose)
-           ;; (cram-tf:apply-transform rot-pose
-           ;;                          transf))
 
          (new-pose (cl-tf:copy-pose-stamped
                     (car init-pose)
@@ -702,13 +754,81 @@
                                                             (+ (/ obj-height 2)
                                                                (cl-tf:z (cl-tf:translation transf)))))
                     :orientation (cl-tf:make-quaternion 0.5 0.5 -0.5 0.5))))
-    (interpolate-pose (car (last init-pose)) new-pose 10)
-    ;; (dotimes (n times)
-    ;;   (let ((opening-pose (cram-tf:translate-pose
-    ;;                        (rotate-once-pose (car (last result)) angle :z)
-    ;;                        :z lift-offset)))
-    ;;     (push opening-pose (cdr (last result)))))
-   ))
+    (interpolate-pose (car (last init-pose)) new-pose 10)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; beerbottlecap-tall ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :beerbottlecap-tall)) (arm (eql :left)) (grasp (eql :top)))
+
+  (let* ((rot (cl-tf:make-quaternion  0.37 0.37 -0.603 0.603))
+         (obj-radius (cl-transforms:x
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
+
+    (cl-transforms-stamped:make-transform-stamped
+     "map" "base_footprint" 0
+     (cl-tf:make-3d-vector 0 (+ 0.09 obj-radius) -0.135) rot)))
+
+(defmethod calculate-pre-opening-trajectory (init-pose name (object-type (eql :beerbottlecap-tall)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 8)
+         (obj-radius (cl-transforms:x
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         (shift-offset (+ (/ obj-radius (* 2 times))))
+         (result (last init-pose)))
+    (dotimes (n (/ times 1))
+      (let ((opening-pose (cram-tf:translate-pose (car (last result)) :y (- (* 2 shift-offset)))))
+        (push opening-pose (cdr (last result)))))
+    
+    result))
+
+(defmethod calculate-opening-trajectory (init-pose name (object-type (eql :beerbottlecap-tall)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 10)
+         (obj-pose (btr:pose  (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1)))
+         (obj-height (cl-transforms:z
+                      (cl-bullet::bounding-box-dimensions
+                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
+         ;; (oTm (cram-tf:pose->transform-stamped
+         ;;       "beerobottlecap_1"
+         ;;       cram-tf:*fixed-frame*
+         ;;       0.0
+         ;;       obj-pose))
+         (mTb (cram-tf:pose->transform-stamped
+               cram-tf:*fixed-frame*
+               cram-tf:*robot-base-frame*
+               0.0
+               (btr:pose (btr:get-robot-object))))
+
+         (transf (lookup-transform-using-map
+                  obj-pose
+                  (cram-tf:apply-transform mTb (cram-tf:pose-stamped->transform-stamped (car init-pose) "beerbottlecap_1") :result-as-pose-or-transform :pose) "bottleopener_1" "beerbottlecap_1"))
+         
+
+         (new-pose (cl-tf:copy-pose-stamped
+                    (car init-pose)
+                    :origin (cl-tf:v+ (cl-tf:origin (car (last init-pose)))
+                                                    ;;(car init-pose))
+                                      (cl-tf:make-3d-vector 0
+                                                            ;;0
+                                                            0.005
+                                                            (+ (/ obj-height 2)
+                                                               (cl-tf:z (cl-tf:translation transf)))))
+                    :orientation (cl-tf:make-quaternion 0.5 0.5 -0.5 0.5))))
+    (interpolate-pose (car (last init-pose)) new-pose 10)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; cork ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmethod get-object-type-robot-frame-open-approach-transform (name (object-type (eql :cork)) (arm (eql :left)) (grasp (eql :top)))
+
+  (let* ((z (cl-transforms:z
+             (cl-bullet::bounding-box-dimensions
+              (btr::aabb  (btr:object btr:*current-bullet-world* name))))))
+    
+    (cl-transforms-stamped:make-transform-stamped
+     "map" "base_footprint" 0
+     (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0))))
 
 (defmethod calculate-pre-opening-trajectory (init-pose name (object-type (eql :cork)) &optional (angle (cram-math:degrees->radians 10)))
   (let* ((times 36)
@@ -740,77 +860,12 @@
     
     result))
 
-(defmethod calculate-pre-opening-trajectory (init-pose name (object-type (eql :beerbottlecap)) &optional (angle (cram-math:degrees->radians 10)))
-  (let* ((times 8)
-         (obj-radius (cl-transforms:x
-                      (cl-bullet::bounding-box-dimensions
-                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
-         (shift-offset (+ (/ obj-radius (* 2 times))))
-         (result (last init-pose)))
-    (dotimes (n (/ times 1))
-      (let ((opening-pose (cram-tf:translate-pose (car (last result)) :y (- (* 2 shift-offset)))))
-        (push opening-pose (cdr (last result)))))
-    
-    result))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; other ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; to cover all the cases who dont need a special pre-opening trajectory
 (defmethod calculate-pre-opening-trajectory (init-pose name (object-type t) &optional (angle (cram-math:degrees->radians 10)))
   init-pose)
-
-
-(defun rotate-coords (p rot)
-  (let* ((rot-conj (cl-tf:make-quaternion (- (cl-tf:x rot)) (- (cl-tf:y rot)) (- (cl-tf:z rot)) (cl-tf:w rot)))
-         (p-as-quaternion (cl-tf:make-quaternion (cl-tf:x p) (cl-tf:y p) (cl-tf:z p) 0))
-         (rotated-p (cl-tf:q* rot p-as-quaternion rot-conj))
-         new-coordinates)
-    
-    ;; Extract the new coordinates of point B from the rotated quaternion
-    (setf new-coordinates(cl-tf:make-3d-vector (cl-tf:x rotated-p) (cl-tf:y rotated-p) (cl-tf:z rotated-p)))
-    
-    ;; Print the new coordinates of point B
-    (format t "New coordinates of point B: ~A" new-coordinates)
-    new-coordinates))
-
-(defun calc-rotation ()
-  (let* ((pos1 (cl-tf:make-3d-vector
-                0.7626845194658584d0
-                -0.017200075319338353d0
-                0.9853611683366628d0))
-         (rot1 (cl-tf:quaternion->matrix (cl-tf:make-quaternion
-                0.3698118237163824
-                0.3698118237163824
-                -0.6026933009745199
-                0.6026933009745199)))
-         (pos2 (cl-tf:make-3d-vector
-                0.7626845194658584d0
-                -0.057200074425268685d0
-                1.0333267173767091d0))
-         (rot2 (cl-tf:quaternion->matrix (cl-tf:make-quaternion 0.5 0.5 -0.5 0.5)))
-         (pos3 (cl-tf:make-3d-vector
-                1.4626845041910808d0
-                0.5560557683308919d0
-                0.9989501317342122d0))
-         (rot3 (cl-tf:quaternion->matrix (cl-tf:make-quaternion
-                -0.16467225551605225
-                -0.16467225551605225
-                -0.6876649260520935
-                0.6876649260520935)))
-         (rel-rot (dot-product rot3 (cl-tf:invert-rot-matrix rot2)))
-         (rel-transl (dot-product rel-rot
-                                  (make-array '(3 1) :initial-contents `((,(cl-tf:x pos1))
-                                                                         (,(cl-tf:y pos1))
-                                                                         (,(cl-tf:z pos1))))))
-         (pose-rot (dot-product rel-rot rot1)))
-    (cl-tf:make-pose-stamped
-     "map" 0
-     (cl-tf:v+ (cl-tf:make-3d-vector (aref rel-transl 0 0)
-                                     (aref rel-transl 1 0)
-                                     (aref rel-transl 2 0))
-               pos3)
-     (cl-tf:matrix->quaternion pose-rot))
-    (print rel-rot)
-    (print rel-transl)
-    ;; (cl-tf:normalize (cl-tf:matrix->quaternion pose-rot))
-    ))
 
 (defun dot-product (matrix-a matrix-b)
   (let* ((rows-a (array-dimensions matrix-a))
@@ -826,27 +881,6 @@
                   (incf sum (* (aref matrix-a i k) (aref matrix-b k j))))
                 (setf (aref result i j) sum))))
           result))))
-
-;; (defun slerp (q1 q2 t-val)
-;;   (let ((dot-prod (cl-tf:q-dot q2 q1))
-;;         result
-;;         theta
-;;         sin-theta
-;;         s0
-;;         s1)
-;;     (when (< dot-prod 0.0)
-;;       (setf q1 (cl-tf:q-inv q1))
-;;       (setf dot-prod (- dot-prod)))
-    
-;;     (when (> dot-prod 0.9999)
-;;       (setf result (cl-tf:q+ q1 (cl-tf:q* t-val (cl-tf:q- q2 q1)))))
-    
-;;     (setf theta (* t-val (acos dot-prod)))
-;;     (setf sin-theta (sin theta))
-;;     (setf s0 (- (cos theta) (* dot-prod sin-theta)))
-;;     (setf s1 sin-theta)
-
-;;     (cl-tf:q+ (cl-tf:q* s0 q1) (cl-tf:q* s1 q2))))
 
 (defun slerp-q (q1 q2 t-val)
   (let ((dot-prod (min 1.0 (max -1.0 (cl-tf:q-dot q2 q1))))
@@ -888,17 +922,6 @@
                                      (/ 1 sin-theta)))))
     result))
 
-(;; defun interpolate-rotation (start-pose end-pose steps)
- ;;  (let ((i steps)
- ;;        interp)
- ;;    (loop while (> i 0)
- ;;          do
- ;;             (let* ((t-val (/ i (- steps 1)))
- ;;                    (q (slerp start-q end-q t-val)))
- ;;               (push q interp)
- ;;               (format t "Step: ~a, interpolated quaternion: ~a ~%" i q))
- ;;             (setf i (- i 1)))))
-
 (defun interpolate-pose (start-pose end-pose steps)
   (let (interp
         (step-size (/ 1.0 (- steps 1))))
@@ -911,11 +934,3 @@
                (unless (> t-val 1)
                  (push pose interp))))
     (reverse interp)))
-
-
-     ;; (start-q (cl-tf:make-quaternion
-     ;;              0.3698118237163824d0
-     ;;              0.3698118237163824d0
-     ;;              -0.6026933009745199d0
-     ;;              0.6026933009745199d0))
-     ;;    (end-q (cl-tf:make-quaternion 0.5 0.5 -0.5 0.5))

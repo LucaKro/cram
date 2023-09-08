@@ -37,11 +37,15 @@
      (:spoon . ((0.15 -0.4 -0.05) (0 0 0 1)))
      (:milk . ((0.17 -0.35 0.1) (0 0 0 1)))
      (:milkbottle . ((0.17 -0.15 0.1) (0 0 0 1)))
+     (:milkpack . ((0.17 -0.15 0.1) (0 0 0 1)))
      (:winebottle . ((0.17 -0.15 0.1) (0 0 0 1)))
      (:corkscrew . ((0.17 -0.35 0.1) (0 0 0 1)))
      (:bottleopener . ((0.17 -0.35 0.1) (0 0 0 1)))
-     (:beerbottle . ((0.17 -0.15 0.1) (0 0 0 1)))))
+     (:beerbottle . ((0.17 -0.15 0.1) (0 0 0 1)))
+     (:beerbottle-tall . ((0.17 -0.15 0.1) (0 0 0 1)))
+     (:albihimbeerjuice . ((0.17 -0.15 0.1) (0 0 0 1)))))
   "Relative poses on sink area")
+
 
 (defparameter *object-placing-poses*
   '((:breakfast-cereal . ((-0.78 0.9 0.95) (0 0 1 0)))
@@ -108,11 +112,7 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
                                                         ;; :bowl
                                                         ;; :spoon
                                                         ;; :milk
-                                                        ;; :milkbottle
-                                                        ;; :corkscrew
-                                                        ;; :winebottle
-                                                        :beerbottle
-                                                        :bottleopener
+                                                        :milkpack
                                                         ))
                                         (spawning-poses-relative *object-spawning-poses*)
                                         (random NIL))
@@ -193,11 +193,20 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
       (let* ((milk-map-transf (cram-tf:pose->transform-stamped "map" "milkbottle_1" 0  (btr:object-pose :milkbottle-1)))
              (milk-cap-transf (cl-tf:make-transform-stamped "milkbottle_1" "milkbottle_1" 0 (cl-tf:make-3d-vector 0 -0.0025 0.095) (cl-tf:make-identity-rotation)))
              (cap-pose (cram-tf:apply-transform milk-map-transf milk-cap-transf :result-as-pose-or-transform :pose)))
-
         (btr-utils:spawn-object :milkbottlecap-1 :milkbottlecap
                                 :pose cap-pose)            
         (btr:attach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
                            (btr:object btr:*current-bullet-world* :milkbottlecap-1))))
+
+    (when (btr:object btr:*current-bullet-world* :milkpack-1)
+      (let* ((milk-map-transf (cram-tf:pose->transform-stamped "map" "milkpack_1" 0  (btr:object-pose :milkpack-1)))
+             (milk-cap-transf (cl-tf:make-transform-stamped "milkpack_1" "milkpack_1" 0 (cl-tf:make-3d-vector 0.022 0.00 0.068) (cl-tf:make-quaternion 0 0.383 0 0.924)))
+             (cap-pose (cram-tf:apply-transform milk-map-transf milk-cap-transf :result-as-pose-or-transform :pose)))
+
+        (btr-utils:spawn-object :milkpackcap-1 :milkpackcap
+                                :pose cap-pose)            
+        (btr:attach-object (btr:object btr:*current-bullet-world* :milkpack-1)
+                           (btr:object btr:*current-bullet-world* :milkpackcap-1))))
 
     (when (btr:object btr:*current-bullet-world* :winebottle-1)
       
@@ -220,6 +229,26 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
         (btr:attach-object (btr:object btr:*current-bullet-world* :beerbottle-1)
                            (btr:object btr:*current-bullet-world* :beerbottlecap-1))))
 
+    (when (btr:object btr:*current-bullet-world* :beerbottle-tall-1)
+      
+      (let* ((beer-map-transf (cram-tf:pose->transform-stamped "map" "beerbottle_tall_1" 0  (btr:object-pose :beerbottle-tall-1)))
+             (beer-cap-transf (cl-tf:make-transform-stamped "beerbottle_tall_1" "beerbottle_tall_1" 0 (cl-tf:make-3d-vector 0 0 0.107) (cl-tf:make-identity-rotation)))
+             (beer-pose (cram-tf:apply-transform beer-map-transf beer-cap-transf :result-as-pose-or-transform :pose)))
+        (btr-utils:spawn-object :beerbottlecap-tall-1 :beerbottlecap-tall
+                                :pose beer-pose)
+        (btr:attach-object (btr:object btr:*current-bullet-world* :beerbottle-tall-1)
+                           (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1))))
+
+     (when (btr:object btr:*current-bullet-world* :albihimbeerjuice-1)
+      
+
+       (let* ((albi-map-transf (cram-tf:pose->transform-stamped "map" "albihimbeerjuice_1" 0  (btr:object-pose :albihimbeerjuice-1)))
+             (albi-cap-transf (cl-tf:make-transform-stamped "albihimbeerjuice_1" "albihimbeerjuice_1" 0 (cl-tf:make-3d-vector -0.015 -0.015 0.122) (cl-tf:make-identity-rotation)))
+             (albi-pose (cram-tf:apply-transform albi-map-transf albi-cap-transf :result-as-pose-or-transform :pose)))
+        (btr-utils:spawn-object :albihimbeerjuicecap-1 :albihimbeerjuicecap
+                                :pose albi-pose)
+        (btr:attach-object (btr:object btr:*current-bullet-world* :albihimbeerjuice-1)
+                           (btr:object btr:*current-bullet-world* :albihimbeerjuicecap-1))))
     
     ;; return list of BTR objects
     objects))

@@ -80,21 +80,39 @@
   (<- (man-int:object-type-direct-subtype :kitchen-item :lid))
   (<- (man-int:object-type-direct-subtype :kitchen-item :wine))
   (<- (man-int:object-type-direct-subtype :kitchen-item :beer))
+  (<- (man-int:object-type-direct-subtype :kitchen-item :juice))
+
 
   (<- (man-int:object-type-direct-subtype :opener :corkscrew))
   (<- (man-int:object-type-direct-subtype :opener :bottleopener))
   
-  (<- (man-int:object-type-direct-subtype :lid :milkbottlecap))
-  (<- (man-int:object-type-direct-subtype :lid :cork))
+  (<- (man-int:object-type-direct-subtype :lid :removed-by-hand))
+  (<- (man-int:object-type-direct-subtype :lid :removed-by-tool))
+
+  (<- (man-int:object-type-direct-subtype :removed-by-tool :cork))
+  (<- (man-int:object-type-direct-subtype :removed-by-tool :beerbottlecap))
+  (<- (man-int:object-type-direct-subtype :removed-by-tool :beerbottlecap-tall))
+
+  (<- (man-int:object-type-direct-subtype :removed-by-hand :milkbottlecap))
+  (<- (man-int:object-type-direct-subtype :removed-by-hand :milkpackcap))
+  (<- (man-int:object-type-direct-subtype :removed-by-hand :albihimbeerjuicecap))
+
+  (<- (man-int:object-type-direct-subtype :juice :albihimbeerjuicecap))
+  (<- (man-int:object-type-direct-subtype :juice :albihimbeerjuice))
   
   (<- (man-int:object-type-direct-subtype :milk :milkbottle))
   (<- (man-int:object-type-direct-subtype :milk :milkbottlecap))
+
+  (<- (man-int:object-type-direct-subtype :milk :milkpack))
+  (<- (man-int:object-type-direct-subtype :milk :milkpackcap))
 
   (<- (man-int:object-type-direct-subtype :wine :winebottle))
   (<- (man-int:object-type-direct-subtype :wine :cork))
 
   (<- (man-int:object-type-direct-subtype :beer :beerbottle))
   (<- (man-int:object-type-direct-subtype :beer :beerbottlecap))
+  (<- (man-int:object-type-direct-subtype :beer :beerbottle-tall))
+  (<- (man-int:object-type-direct-subtype :beer :beerbottlecap-tall))
   
 )
 
@@ -137,11 +155,17 @@
     ((object-type (eql :tray)))
   0.02)
 (defmethod man-int:get-action-gripper-opening :heuristics 20
-    ((object-type (eql :cork)))
+    ((object-type (eql :removed-by-tool)))
   0.00)
-(defmethod man-int:get-action-gripper-opening :heuristics 20
-    ((object-type (eql :beerbottlecap)))
-  0.00)
+;; (defmethod man-int:get-action-gripper-opening :heuristics 20
+;;     ((object-type (eql :cork)))
+;;   0.00)
+;; (defmethod man-int:get-action-gripper-opening :heuristics 20
+;;     ((object-type (eql :beerbottlecap)))
+;;   0.00)
+;; (defmethod man-int:get-action-gripper-opening :heuristics 20
+;;     ((object-type (eql :beerbottlecap-tall)))
+;;   0.00)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -922,6 +946,120 @@
   :lift-translation *lift-offset*
   :2nd-lift-translation *lift-offset*)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; albihimbeerjuice ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *albi-grasp-xy-offset* 0.01 "in meters")
+(defparameter *albi-grasp-z-offset* -0.03 "in meters")
+(defparameter *albi-pregrasp-xy-offset* 0.15 "in meters")
+(defparameter *albi-lift-z-offset* 0.15 "in meters")
+(defparameter *albi-top-grasp-x-offset* 0.00 "in meters")
+;; (defparameter *cup-eco-orange-top-grasp-z-offset* 0.02 "in meters")
+(defparameter *albi-top-grasp-z-offset* 0.1 "in meters")
+
+(defparameter *albihimbeerjuicecap-top-grasp-x-offset* 0.00 "in meters")
+(defparameter *albihimbeerjuicecap-top-grasp-z-offset* 0.0 "in meters")
+
+;; TOP grasp
+(man-int:def-object-type-to-gripper-transforms :albihimbeerjuicecap '(:left :right) :top
+  :grasp-translation `(,(- *albihimbeerjuicecap-top-grasp-x-offset*) 0.0d0 ,*albihimbeerjuicecap-top-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
+  :pregrasp-offsets *lift-offset*
+  :2nd-pregrasp-offsets *lift-offset*
+  :lift-translation *lift-offset*
+  :2nd-lift-translation *lift-offset*)
+
+;; BACK grasp
+(man-int:def-object-type-to-gripper-transforms :albihimbeerjuice '(:left :right) :back
+  :grasp-translation `(,*albi-grasp-xy-offset* 0.0d0 ,*albi-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*-x-across-z-grasp-rotation*
+  :pregrasp-offsets `(,(- *albi-pregrasp-xy-offset*) 0.0 ,*albi-lift-z-offset*)
+  :2nd-pregrasp-offsets `(,(- *albi-pregrasp-xy-offset*) 0.0 0.0)
+  :lift-translation `(0.0 0.0 ,*albi-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*albi-lift-z-offset*))
+
+;; FRONT grasp
+(man-int:def-object-type-to-gripper-transforms :albihimbeerjuice '(:left :right) :front
+  :grasp-translation `(,(- *albi-grasp-xy-offset*) 0.0d0 ,*albi-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*x-across-z-grasp-rotation*
+  :pregrasp-offsets `(,*albi-pregrasp-xy-offset* 0.0 ,*albi-lift-z-offset*)
+  :2nd-pregrasp-offsets `(,*albi-pregrasp-xy-offset* 0.0 0.0)
+  :lift-translation `(0.0 0.0 ,*albi-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*albi-lift-z-offset*))
+
+;; SIDE grasp
+(man-int:def-object-type-to-gripper-transforms :albihimbeerjuice '(:left :right) :left-side
+  :grasp-translation `(0.0d0 ,(- *albi-grasp-xy-offset*) ,*albi-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*y-across-z-grasp-rotation*
+  :pregrasp-offsets `(0.0 ,*albi-pregrasp-xy-offset* ,*albi-lift-z-offset*)
+  :2nd-pregrasp-offsets `(0.0 ,*albi-pregrasp-xy-offset* 0.0)
+  :lift-translation `(0.0 0.0 ,*albi-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*albi-lift-z-offset*))
+
+(man-int:def-object-type-to-gripper-transforms :albihimbeerjuice '(:left :right) :right-side
+  :grasp-translation `(0.0d0 ,*albi-grasp-xy-offset* ,*albi-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*-y-across-z-grasp-rotation*
+  :pregrasp-offsets `(0.0 ,(- *albi-pregrasp-xy-offset*) ,*albi-lift-z-offset*)
+  :2nd-pregrasp-offsets `(0.0 ,(- *albi-pregrasp-xy-offset*) 0.0)
+  :lift-translation `(0.0 0.0 ,*albi-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*albi-lift-z-offset*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; milkpack ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *milkpack-grasp-xy-offset* 0.01 "in meters")
+(defparameter *milkpack-grasp-z-offset* -0.03 "in meters")
+(defparameter *milkpack-pregrasp-xy-offset* 0.15 "in meters")
+(defparameter *milkpack-lift-z-offset* 0.15 "in meters")
+(defparameter *milkpack-top-grasp-x-offset* 0.00 "in meters")
+;; (defparameter *cup-eco-orange-top-grasp-z-offset* 0.02 "in meters")
+(defparameter *milkpack-top-grasp-z-offset* 0.1 "in meters")
+
+(defparameter *milkpackcap-top-grasp-x-offset* 0.00 "in meters")
+(defparameter *milkpackcap-top-grasp-z-offset* 0.0 "in meters")
+
+;; TOP grasp
+(man-int:def-object-type-to-gripper-transforms :milkpackcap '(:left :right) :top
+  :grasp-translation `(,(- *milkpackcap-top-grasp-x-offset*) 0.0d0 ,*milkpackcap-top-grasp-z-offset*)
+  :grasp-rot-matrix man-int::*rotation-around-y+45-matrix*
+  :pregrasp-offsets *lift-offset*
+  :2nd-pregrasp-offsets *lift-offset*
+  :lift-translation *lift-offset*
+  :2nd-lift-translation *lift-offset*)
+
+;; BACK grasp
+(man-int:def-object-type-to-gripper-transforms :milkpack '(:left :right) :back
+  :grasp-translation `(,*milkpack-grasp-xy-offset* 0.0d0 ,*milkpack-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*-x-across-z-grasp-rotation*
+  :pregrasp-offsets `(,(- *milkpack-pregrasp-xy-offset*) 0.0 ,*milkpack-lift-z-offset*)
+  :2nd-pregrasp-offsets `(,(- *milkpack-pregrasp-xy-offset*) 0.0 0.0)
+  :lift-translation `(0.0 0.0 ,*milkpack-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*milkpack-lift-z-offset*))
+
+;; FRONT grasp
+(man-int:def-object-type-to-gripper-transforms :milkpack '(:left :right) :front
+  :grasp-translation `(,(- *milkpack-grasp-xy-offset*) 0.0d0 ,*milkpack-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*x-across-z-grasp-rotation*
+  :pregrasp-offsets `(,*milkpack-pregrasp-xy-offset* 0.0 ,*milkpack-lift-z-offset*)
+  :2nd-pregrasp-offsets `(,*milkpack-pregrasp-xy-offset* 0.0 0.0)
+  :lift-translation `(0.0 0.0 ,*milkpack-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*milkpack-lift-z-offset*))
+
+;; SIDE grasp
+(man-int:def-object-type-to-gripper-transforms :milkpack '(:left :right) :left-side
+  :grasp-translation `(0.0d0 ,(- *milkpack-grasp-xy-offset*) ,*milkpack-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*y-across-z-grasp-rotation*
+  :pregrasp-offsets `(0.0 ,*milkpack-pregrasp-xy-offset* ,*milkpack-lift-z-offset*)
+  :2nd-pregrasp-offsets `(0.0 ,*milkpack-pregrasp-xy-offset* 0.0)
+  :lift-translation `(0.0 0.0 ,*milkpack-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*milkpack-lift-z-offset*))
+
+(man-int:def-object-type-to-gripper-transforms :milkpack '(:left :right) :right-side
+  :grasp-translation `(0.0d0 ,*milkpack-grasp-xy-offset* ,*milkpack-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*-y-across-z-grasp-rotation*
+  :pregrasp-offsets `(0.0 ,(- *milkpack-pregrasp-xy-offset*) ,*milkpack-lift-z-offset*)
+  :2nd-pregrasp-offsets `(0.0 ,(- *milkpack-pregrasp-xy-offset*) 0.0)
+  :lift-translation `(0.0 0.0 ,*milkpack-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*milkpack-lift-z-offset*))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; winebottle ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defparameter *wine-grasp-xy-offset* 0.01 "in meters")
@@ -1049,6 +1187,63 @@
   :2nd-pregrasp-offsets `(0.0 ,(- *beer-pregrasp-xy-offset*) 0.0)
   :lift-translation `(0.0 0.0 ,*beer-lift-z-offset*)
   :2nd-lift-translation `(0.0 0.0 ,*beer-lift-z-offset*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; beerbottle-tall ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defparameter *beer-tall-grasp-xy-offset* 0.01 "in meters")
+(defparameter *beer-tall-grasp-z-offset* -0.03 "in meters")
+(defparameter *beer-tall-pregrasp-xy-offset* 0.15 "in meters")
+(defparameter *beer-tall-lift-z-offset* 0.15 "in meters")
+(defparameter *beer-tall-top-grasp-x-offset* 0.00 "in meters")
+;; (defparameter *cup-eco-orange-top-grasp-z-offset* 0.02 "in meters")
+(defparameter *beer-tall-top-grasp-z-offset* 0.1 "in meters")
+
+(defparameter *beerbottlecap-tall-top-grasp-x-offset* 0.00 "in meters")
+(defparameter *beerbottlecap-tall-top-grasp-z-offset* 0.093 "in meters")
+
+;; TOP grasp
+(man-int:def-object-type-to-gripper-transforms :beerbottlecap-tall '(:left :right) :top
+  :grasp-translation `(,(- *beerbottlecap-tall-top-grasp-x-offset*) 0.0d0 ,*beerbottlecap-tall-top-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
+  :pregrasp-offsets *lift-offset*
+  :2nd-pregrasp-offsets *lift-offset*
+  :lift-translation *lift-offset*
+  :2nd-lift-translation *lift-offset*)
+
+;; BACK grasp
+(man-int:def-object-type-to-gripper-transforms :beerbottle-tall '(:left :right) :back
+  :grasp-translation `(,*beer-tall-grasp-xy-offset* 0.0d0 ,*beer-tall-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*-x-across-z-grasp-rotation*
+  :pregrasp-offsets `(,(- *beer-tall-pregrasp-xy-offset*) 0.0 ,*beer-tall-lift-z-offset*)
+  :2nd-pregrasp-offsets `(,(- *beer-tall-pregrasp-xy-offset*) 0.0 0.0)
+  :lift-translation `(0.0 0.0 ,*beer-tall-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*beer-tall-lift-z-offset*))
+
+;; FRONT grasp
+(man-int:def-object-type-to-gripper-transforms :beerbottle-tall '(:left :right) :front
+  :grasp-translation `(,(- *beer-tall-grasp-xy-offset*) 0.0d0 ,*beer-tall-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*x-across-z-grasp-rotation*
+  :pregrasp-offsets `(,*beer-tall-pregrasp-xy-offset* 0.0 ,*beer-tall-lift-z-offset*)
+  :2nd-pregrasp-offsets `(,*beer-tall-pregrasp-xy-offset* 0.0 0.0)
+  :lift-translation `(0.0 0.0 ,*beer-tall-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*beer-tall-lift-z-offset*))
+
+;; SIDE grasp
+(man-int:def-object-type-to-gripper-transforms :beerbottle-tall '(:left :right) :left-side
+  :grasp-translation `(0.0d0 ,(- *beer-tall-grasp-xy-offset*) ,*beer-tall-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*y-across-z-grasp-rotation*
+  :pregrasp-offsets `(0.0 ,*beer-tall-pregrasp-xy-offset* ,*beer-tall-lift-z-offset*)
+  :2nd-pregrasp-offsets `(0.0 ,*beer-tall-pregrasp-xy-offset* 0.0)
+  :lift-translation `(0.0 0.0 ,*beer-tall-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*beer-tall-lift-z-offset*))
+
+(man-int:def-object-type-to-gripper-transforms :beerbottle-tall '(:left :right) :right-side
+  :grasp-translation `(0.0d0 ,*beer-tall-grasp-xy-offset* ,*beer-tall-grasp-z-offset*)
+  :grasp-rot-matrix man-int:*-y-across-z-grasp-rotation*
+  :pregrasp-offsets `(0.0 ,(- *beer-tall-pregrasp-xy-offset*) ,*beer-tall-lift-z-offset*)
+  :2nd-pregrasp-offsets `(0.0 ,(- *beer-tall-pregrasp-xy-offset*) 0.0)
+  :lift-translation `(0.0 0.0 ,*beer-tall-lift-z-offset*)
+  :2nd-lift-translation `(0.0 0.0 ,*beer-tall-lift-z-offset*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; bottleopener ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
