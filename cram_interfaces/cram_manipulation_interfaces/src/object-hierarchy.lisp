@@ -59,13 +59,13 @@ making sure that the method specializers match with the `args'."
            (type keyword object-type))
   (if (compute-applicable-methods-for-specific-type generic object-type args)
       object-type
-      (car (mapcar
-            (lambda (object-type)
-              (apply #'find-most-specific-object-type-for-generic
-                     generic
-                     object-type
-                     args))
-            (get-direct-supertypes object-type)))))
+      (car (remove nil (mapcar
+                        (lambda (object-type)
+                          (apply #'find-most-specific-object-type-for-generic
+                                 generic
+                                 object-type
+                                 args))
+                        (get-direct-supertypes object-type))))))
 
 (defun call-with-specific-type (fun object-type &rest args)
   "Call generic function `fun' with the most specific type for `object-type'. Have
