@@ -1,5 +1,5 @@
-;;;
-;;; Copyright (c) 2017, Gayane Kazhoyan <kazhoyan@cs.uni-bremen.de>
+;;; Copyright (c) 2016, Gayane Kazhoyan <kazhoyan@cs.uni-bremen.de>
+;;; Copyright (c) 2023, Luca Krohm <luc_kro@uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -27,14 +27,42 @@
 ;;; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-user)
+(defsystem cram-open-bottle-plans
+  :author "Luca Krohm"
+  :maintainer "Luca Krohm"
+  :license "BSD"
 
-(defpackage cram-pr2-open-bottle-demo
-  (:nicknames #:pr2-ob-demo #:demo)
-  (:use #:common-lisp #:cram-prolog)
-  (:export
-   ;; setup
-   ;; #:bla
-   ;; demo
-   ))
+  :depends-on (cl-transforms
+               cl-transforms-stamped
+               ;; cl-tf2 ; in grasping overwrite tf transformer with tf2
 
+               roslisp ; for debug statements
+               roslisp-utilities
+
+               cram-language
+               cram-prolog
+               cram-designators
+               cram-occasions-events
+               cram-executive
+               cram-utilities ; for cut:var-value of prolog stuff
+
+               cram-tf
+               cram-plan-occasions-events
+               cram-common-failures
+               cram-manipulation-interfaces
+               cram-mobile-pick-place-plans
+               cram-robot-interfaces)
+
+  :components
+  ((:module "src"
+    :components
+    ((:file "package")
+
+     ;; PICKING-UP and PLACING actions
+     (:file "open-bottle-plans" :depends-on ("package"))
+     (:file "trajectories" :depends-on ("package"))
+     
+     (:file "open-bottle-designators" :depends-on ("package"
+                                                "open-bottle-plans"))
+     ;; high-level plans such as DRIVE-AND-PICK-UP, PERCEIVE, etc.
+     ))))

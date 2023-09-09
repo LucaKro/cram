@@ -1,9 +1,9 @@
 <package format="2">
   <name>cram_pr2_open_bottle_demo</name>
   <version>0.7.0</version>
-  <description>Demo code for picking and placing objects on counters</description>
-  <author>Gayane Kazhoyan</author>
-  <maintainer email="kazhoyan@cs.uni-bremen.de">Gayane Kazhoyan</maintainer>
+  <description>Demo code for opening bottles</description>
+  <author>Luca Krohm</author>
+  <maintainer email="luc_kro@uni-bremen.de">Gayane Kazhoyan</maintainer>
   <license>BSD</license>
 
   <url type="website">http://cram-system.org</url>
@@ -54,4 +54,6 @@
   <exec_depend>pr2_description</exec_depend>
   <exec_depend>pr2_arm_kinematics</exec_depend>
   <exec_depend>map_server</exec_depend>
+  
+  <depend>cram_open_bottle_plans</depend>
 </package>

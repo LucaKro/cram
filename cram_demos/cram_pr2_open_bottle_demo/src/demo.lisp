@@ -139,69 +139,6 @@
   (sb-ext:gc :full t))
 
 
-(cpl:def-cram-function demo-random (&optional
-                                    (random
-                                     nil)
-                                    (list-of-objects
-                                     '(;; :bowl :spoon :cup
-                                       :milk ;; :breakfast-cereal
-                                       )))
-
-  (initialize)
-  (when cram-projection:*projection-environment*
-    (spawn-objects-on-sink-counter :random random))
-
-  (park-robot)
-
-  (dolist (?object-type list-of-objects)
-    (let* ((?arm-to-use
-             (cdr (assoc ?object-type *object-grasping-arms*)))
-           (?cad-model
-             (cdr (assoc ?object-type *object-cad-models*)))
-           (?color
-             (cdr (assoc ?object-type *object-colors*)))
-           (?material
-             (cdr (assoc ?object-type *object-materials*)))
-           (?object-to-fetch
-             (desig:an object
-                       (type ?object-type)
-                       (desig:when ?cad-model
-                         (cad-model ?cad-model))
-                       (desig:when ?color
-                         (color ?color))
-                       (desig:when ?material
-                         (material ?material)))))
-
-      (cpl:with-failure-handling
-          ((common-fail:high-level-failure (e)
-             (roslisp:ros-warn (pp-plans demo) "Failure happened: ~a~%Skipping..." e)
-             (return)))
-
-        (exe:perform
-         (desig:an action
-                   (type finding-and-opening-bottle)
-                   (context table-setting-counter)
-                   (object ?object-to-fetch)
-                   ;; (desig:when ?arm-to-use
-                   ;;   (arms (?arm-to-use)))
-                   )))
-
-
-     ;;
-      ;;(get-tilting-poses grasp (list approach-pose))
-        
-       ;; (setf proj-reasoning::*projection-reasoning-enabled* nil)
-      ))
-
-  ;; (setf proj-reasoning::*projection-reasoning-enabled* nil)
-
-  ;;(park-robot)
-
-  (finalize)
-
-  cpl:*current-path*)
-
-
 (defparameter *base-pose-bottle*
   (cl-transforms-stamped:make-pose-stamped
    "map" 0.0
@@ -331,14 +268,5 @@
                      (type 2hand-bottle)
                      (object ?perceived-object)
                      (when ?perceived-object-cap
-                       (object-cap ?perceived-object-cap))
-                     ))
-          )))))
+                       (object-cap ?perceived-object-cap)))))))))
       
-      ;; (break)
-      ;; (exe:perform
-      ;;  (desig:an action
-      ;;            (type bottle)
-      ;;            (arm ?opening-arm)
-      ;;            (object ?perceived-object)
-      ;;            )))))

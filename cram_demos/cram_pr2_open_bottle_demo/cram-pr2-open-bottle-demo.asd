@@ -1,5 +1,5 @@
 ;;;
-;;; Copyright (c) 2017, Gayane Kazhoyan <kazhoyan@cs.uni-bremen.de>
+;;; Copyright (c) 2023, Luca Krohm <luc_kro@uni-bremen.de>
 ;;; All rights reserved.
 ;;;
 ;;; Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 ;;; POSSIBILITY OF SUCH DAMAGE.
 
 (defsystem cram-pr2-open-bottle-demo
-  :author "LucaKro"
+  :author "Luca Krohm"
   :license "BSD"
 
   :depends-on (roslisp-utilities ; for ros-init-function
@@ -72,23 +72,13 @@
                cram-pr2-description
                cram-boxy-description
                cram-donbot-description
-               cram-hsrb-description)
+               cram-hsrb-description
+               cram-open-bottle-plans)
 
   :components
   ((:module "src"
     :components
     ((:file "package")
      (:file "setup" :depends-on ("package"))
-     (:file "costmaps" :depends-on ("package"))
-     (:file "projection-demo" :depends-on ("package" "costmaps"))
-     (:file "demo" :depends-on ("package" "projection-demo" "costmaps"))
-     (:file "milestone-projection-demo" :depends-on ("package"
-                                                     "projection-demo"
-                                                     "costmaps"))
-     (:file "data-generation-script" :depends-on ("package"
-                                                  "projection-demo"
-                                                  "costmaps"))
-     (:file "data-generation-plan" :depends-on ("package" "demo"))
-     (:file "evaluation-plan" :depends-on ("package" "demo"))
-     (:file "open-bottle-plans" :depends-on ("package" "demo"))
-     (:file "trajectories" :depends-on ("package" "demo"))))))
+     (:file "projection-demo" :depends-on ("package" ))
+     (:file "demo" :depends-on ("package" "projection-demo" ))))))

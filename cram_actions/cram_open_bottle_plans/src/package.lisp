@@ -29,8 +29,8 @@
 
 (in-package :cl-user)
 
-(defpackage cram-pr2-open-bottle-demo
-  (:nicknames #:pr2-ob-demo #:demo)
+(defpackage cram-open-bottle-plans
+  (:nicknames #:ob-plans)
   (:use #:common-lisp #:cram-prolog)
   (:export
    ;; setup
