@@ -220,20 +220,27 @@
 (defun pickup-opener (object)
   
   ;; (urdf-proj:with-simulated-robot
-  ;;   (btr-utils:kill-all-objects)
-  ;;   (park-robot)
+    ;; (btr-utils:kill-all-objects)
+    ;; (park-robot)
     (let((?type (case object
                   (:wine :corkscrew)
-                  (:beer :bottleopener)
-                  (:beer-tall :bottleopener)))
+                  (:beer :caplifter)
+                  (:beer-tall :caplifter)))
          (?name (case object
                   (:wine :corkscrew-1)
-                  (:beer :bottleopener-1)
-                  (:beer-tall :bottleopener-1))))
-      (btr-utils:spawn-object ?name ?type
-                              :pose (cl-transforms:make-pose
-                                     (cl-tf:make-3d-vector 1.4d0 0.65d0 0.89)
-                                     (cl-tf:make-identity-rotation)))
+                  (:beer :caplifter-1)
+                  (:beer-tall :caplifter-1))))
+
+      (case ?type
+        (:electric-corkscrew (btr-utils:spawn-object ?name ?type
+                                                     :pose (cl-transforms:make-pose
+                                                            (cl-tf:make-3d-vector 1.4d0 0.65d0 0.925)
+                                                            (cl-tf:make-quaternion 0 0 1 0))))
+        (t (btr-utils:spawn-object ?name ?type
+                                   :pose (cl-transforms:make-pose
+                                          (cl-tf:make-3d-vector 1.4d0 0.65d0 0.89)
+                                          (cl-tf:make-identity-rotation)))))
+      
       (let ((?navigation-goal *base-pose-bottle*))
         (exe:perform (desig:an action
                                (type going)
@@ -263,8 +270,8 @@
                                                  (:milk '(:milkbottle))
                                                  (:milkpack '(:milkpack))
                                                  (:juice '(:albihimbeerjuice))
-                                                 (:beer '(:beerbottle :bottleopener))
-                                                 (:beer-tall '(:beerbottle-tall :bottleopener))))
+                                                 (:beer '(:beerbottle :caplifter))
+                                                 (:beer-tall '(:beerbottle-tall :caplifter))))
   (urdf-proj:with-simulated-robot
     (park-robot)
     (when (or (eq object :wine)
