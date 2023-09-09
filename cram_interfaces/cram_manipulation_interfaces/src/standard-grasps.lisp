@@ -36,6 +36,8 @@
 (defparameter *sin-pi/3* (sin (/ pi 3)))
 (defparameter *-sin-pi/3* (- *sin-pi/3*))
 
+(defparameter *cos-pi/4* (cos (/ pi 4)))
+
 ;; back / front
 (defparameter *x-across-z-grasp-rotation*
   '(( 0  0 -1)

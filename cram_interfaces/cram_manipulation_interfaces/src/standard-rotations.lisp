@@ -69,6 +69,10 @@
     ( 0  1  0)
     ( 0  0 -1)))
 
+(defparameter *rotation-around-y+45-matrix*
+  `((,*cos-pi/4*  0 ,*sin-pi/4*)
+    (0            1 0)
+    (,*-sin-pi/4* 0 ,*cos-pi/4*)))
 
 (defparameter *rotation-around-x+90-list*
   '(0.7071067811865475d0 0.0d0 0.0d0 0.7071067811865476d0))
