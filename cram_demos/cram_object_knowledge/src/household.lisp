@@ -85,7 +85,6 @@
   (<- (man-int:object-type-direct-subtype :tool :opener))
   
   (<- (man-int:object-type-direct-subtype :opener :corkscrew))
-  (<- (man-int:object-type-direct-subtype :opener :electric-corkscrew))
   (<- (man-int:object-type-direct-subtype :opener :caplifter))
   
   (<- (man-int:object-type-direct-subtype :lid :removed-by-hand))
@@ -167,6 +166,9 @@
 (defmethod man-int:get-action-gripper-opening :heuristics 20
     ((object-type (eql :removed-by-tool)))
   0.00)
+(defmethod man-int:get-action-gripper-opening :heuristics 20
+    ((object-type (eql :removed-by-hand)))
+  0.10)
 ;; (defmethod man-int:get-action-gripper-opening :heuristics 20
 ;;     ((object-type (eql :cork)))
 ;;   0.00)
@@ -1140,63 +1142,6 @@
   :2nd-pregrasp-offsets *lift-offset*
   :lift-translation *lift-offset*
   :2nd-lift-translation *lift-offset*)
-
-;;;;;;;;;;;;;;;;;;;;;;;;; electric corkscrew ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defparameter *electric-corkscrew-grasp-xy-offset* 0.01 "in meters")
-(defparameter *electric-corkscrew-grasp-z-offset* -0.03 "in meters")
-(defparameter *electric-corkscrew-pregrasp-xy-offset* 0.15 "in meters")
-(defparameter *electric-corkscrew-lift-z-offset* 0.15 "in meters")
-(defparameter *electric-corkscrew-top-grasp-x-offset* 0.00 "in meters")
-;; (defparameter *cup-eco-orange-top-grasp-z-offset* 0.02 "in meters")
-(defparameter *electric-corkscrew-top-grasp-z-offset* 0.1 "in meters")
-
-;; (defparameter *cork-top-grasp-x-offset* 0.00 "in meters")
-;; (defparameter *cork-top-grasp-z-offset* 0.093 "in meters")
-
-;; ;; TOP grasp
-;; (man-int:def-object-type-to-gripper-transforms :electric-corkscrew '(:left :right) :top
-;;   :grasp-translation `(,(- *electric-corkscrew-top-grasp-x-offset*) 0.0d0 ,*cork-top-grasp-z-offset*)
-;;   :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
-;;   :pregrasp-offsets *lift-offset*
-;;   :2nd-pregrasp-offsets *lift-offset*
-;;   :lift-translation *lift-offset*
-;;   :2nd-lift-translation *lift-offset*)
-
-;; BACK grasp
-(man-int:def-object-type-to-gripper-transforms :electric-corkscrew '(:left :right) :back
-  :grasp-translation `(,*electric-corkscrew-grasp-xy-offset* 0.0d0 ,*electric-corkscrew-grasp-z-offset*)
-  :grasp-rot-matrix man-int:*-x-across-z-grasp-rotation*
-  :pregrasp-offsets `(,(- *electric-corkscrew-pregrasp-xy-offset*) 0.0 ,*electric-corkscrew-lift-z-offset*)
-  :2nd-pregrasp-offsets `(,(- *electric-corkscrew-pregrasp-xy-offset*) 0.0 0.0)
-  :lift-translation `(0.0 0.0 ,*electric-corkscrew-lift-z-offset*)
-  :2nd-lift-translation `(0.0 0.0 ,*electric-corkscrew-lift-z-offset*))
-
-;; FRONT grasp
-(man-int:def-object-type-to-gripper-transforms :electric-corkscrew '(:left :right) :front
-  :grasp-translation `(,(- *electric-corkscrew-grasp-xy-offset*) 0.0d0 ,*electric-corkscrew-grasp-z-offset*)
-  :grasp-rot-matrix man-int:*x-across-z-grasp-rotation*
-  :pregrasp-offsets `(,*electric-corkscrew-pregrasp-xy-offset* 0.0 ,*electric-corkscrew-lift-z-offset*)
-  :2nd-pregrasp-offsets `(,*electric-corkscrew-pregrasp-xy-offset* 0.0 0.0)
-  :lift-translation `(0.0 0.0 ,*electric-corkscrew-lift-z-offset*)
-  :2nd-lift-translation `(0.0 0.0 ,*electric-corkscrew-lift-z-offset*))
-
-;; SIDE grasp
-(man-int:def-object-type-to-gripper-transforms :electric-corkscrew '(:left :right) :left-side
-  :grasp-translation `(0.0d0 ,(- *electric-corkscrew-grasp-xy-offset*) ,*electric-corkscrew-grasp-z-offset*)
-  :grasp-rot-matrix man-int:*y-across-z-grasp-rotation*
-  :pregrasp-offsets `(0.0 ,*electric-corkscrew-pregrasp-xy-offset* ,*electric-corkscrew-lift-z-offset*)
-  :2nd-pregrasp-offsets `(0.0 ,*electric-corkscrew-pregrasp-xy-offset* 0.0)
-  :lift-translation `(0.0 0.0 ,*electric-corkscrew-lift-z-offset*)
-  :2nd-lift-translation `(0.0 0.0 ,*electric-corkscrew-lift-z-offset*))
-
-(man-int:def-object-type-to-gripper-transforms :electric-corkscrew '(:left :right) :right-side
-  :grasp-translation `(0.0d0 ,*electric-corkscrew-grasp-xy-offset* ,*electric-corkscrew-grasp-z-offset*)
-  :grasp-rot-matrix man-int:*-y-across-z-grasp-rotation*
-  :pregrasp-offsets `(0.0 ,(- *electric-corkscrew-pregrasp-xy-offset*) ,*electric-corkscrew-lift-z-offset*)
-  :2nd-pregrasp-offsets `(0.0 ,(- *electric-corkscrew-pregrasp-xy-offset*) 0.0)
-  :lift-translation `(0.0 0.0 ,*electric-corkscrew-lift-z-offset*)
-  :2nd-lift-translation `(0.0 0.0 ,*electric-corkscrew-lift-z-offset*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; beerbottle ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

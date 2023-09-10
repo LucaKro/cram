@@ -1,37 +1,39 @@
 (in-package :ob-plans)
 
-(defun 2hand-bottle-func (&key
-                            ((:collision-mode ?collision-mode))
-                            ((:object ?object))
-                            ((:object-cap ?object-cap))
-                            ((:effort ?grip-effort))
-                            ((:right-gripper-opening ?right-gripper-opening))
-                            ((:left-gripper-opening ?left-gripper-opening))
-                            ((:right-approach-poses ?right-approach-poses))
-                            ((:right-grasp-poses ?right-grasp-poses))
-                            ((:left-approach-poses ?left-approach-poses))
-                            ((:left-grasp-poses ?left-grasp-poses))
-                            ((:left-pre-open-poses ?left-pre-open-poses))
-                            ((:left-open-poses ?left-open-poses))
-                            ((:grasp ?grasp))
-                          &allow-other-keys)
-  ;;(break)
+(defun open-bottle (&key
+                      ((:collision-mode ?collision-mode))
+                      ((:object ?object))
+                      ((:object-cap ?object-cap))
+                      ((:effort ?grip-effort))
+                      ((:bottle-hand-gripper-opening ?bottle-hand-gripper-opening))
+                      ((:open-hand-gripper-opening ?open-hand-gripper-opening))
+                      ((:bottle-hand-approach-poses ?bottle-hand-approach-poses))
+                      ((:bottle-hand-grasp-poses ?bottle-hand-grasp-poses))
+                      ((:open-hand-approach-poses ?open-hand-approach-poses))
+                      ((:open-hand-grasp-poses ?open-hand-grasp-poses))
+                      ((:open-hand-pre-open-poses ?open-hand-pre-open-poses))
+                      ((:open-hand-open-poses ?open-hand-open-poses))
+                      ((:bottle-hand ?bottle-hand))
+                      ((:open-hand ?open-hand))
+                      ((:grasp ?grasp))
+                    &allow-other-keys)
+
   (cpl:par
     (roslisp:ros-info (pick-place pick-up) "Opening gripper and reaching")
-    (let ((?goal-left `(cpoe:gripper-joint-at :left ,?left-gripper-opening))
-          (?goal-right `(cpoe:gripper-joint-at :right ,?right-gripper-opening)))
+    (let ((?goal-open-hand `(cpoe:gripper-joint-at ?open-hand ,?open-hand-gripper-opening))
+          (?goal-bottle-hand `(cpoe:gripper-joint-at ?bottle-hand ,?bottle-hand-gripper-opening)))
       (exe:perform
        (desig:an action
                  (type setting-gripper)
-                 (gripper :left)
-                 (position ?left-gripper-opening)
-                 (goal ?goal-left)))
+                 (gripper ?open-hand)
+                 (position ?open-hand-gripper-opening)
+                 (goal ?goal-open-hand)))
       (exe:perform
        (desig:an action
                  (type setting-gripper)
-                 (gripper :right)
-                 (position ?right-gripper-opening)
-                 (goal ?goal-right))))
+                 (gripper ?bottle-hand)
+                 (position ?bottle-hand-gripper-opening)
+                 (goal ?goal-bottle-hand))))
     (cpl:with-failure-handling
         ((common-fail:manipulation-low-level-failure (e)
            (roslisp:ros-warn (pp-plans pick-up)
@@ -40,21 +42,26 @@
            (return)))
       (cpl:par
         ;; this had to be done in parallel so as to specify 2 different objects as goals
-        (let ((?goal `(cpoe:tool-frames-at ,?right-approach-poses)))
+        (let ((?goal `(cpoe:tool-frames-at ,?bottle-hand-approach-poses)))
           (exe:perform
            (desig:an action
                      (type reaching)
                      (object ?object)
-                     (right-poses ?right-approach-poses)
+                     (when (eql ?bottle-hand :right)
+                       (right-poses ?bottle-hand-approach-poses))
+                     (when (eql ?bottle-hand :left)
+                       (left-poses ?bottle-hand-approach-poses))
                      (goal ?goal))))
-        (let ((?goal `(cpoe:tool-frames-at ,?left-approach-poses)))
+        (let ((?goal `(cpoe:tool-frames-at ,?open-hand-approach-poses)))
           (exe:perform
            (desig:an action
                      (type reaching)
                      (object ?object-cap)
-                     (left-poses ?left-approach-poses)
+                     (when (eql ?open-hand :right)
+                       (right-poses ?open-hand-approach-poses))
+                     (when (eql ?open-hand :left)
+                       (left-poses ?open-hand-approach-poses))
                      (goal ?goal)))))))
- ;; (break)
   (roslisp:ros-info (pick-place pick-up) "Grasping")
   (cpl:with-failure-handling
       ((common-fail:manipulation-low-level-failure (e)
@@ -64,44 +71,49 @@
          (return)))
     (cpl:par
       ;; this had to be done in parallel so as to specify 2 different objects as goals
-      (let ((?goal `(cpoe:tool-frames-at ,?right-grasp-poses)))
+      (let ((?goal `(cpoe:tool-frames-at ,?bottle-hand-grasp-poses)))
         (exe:perform
          (desig:an action
                    (type grasping)
                    (object ?object)
-                   (right-poses ?right-grasp-poses)
+                   (when (eql ?bottle-hand :right)
+                       (right-poses ?bottle-hand-grasp-poses))
+                   (when (eql ?bottle-hand :left)
+                     (left-poses ?bottle-hand-grasp-poses))
                    (goal ?goal))))
-      (let ((?goal `(cpoe:tool-frames-at ,?left-grasp-poses)))
+      (let ((?goal `(cpoe:tool-frames-at ,?open-hand-grasp-poses)))
         (exe:perform
          (desig:an action
                    (type grasping)
                    (object ?object-cap)
-                   (left-poses ?left-grasp-poses)
+                   (when (eql ?open-hand :right)
+                       (right-poses ?open-hand-grasp-poses))
+                   (when (eql ?open-hand :left)
+                     (left-poses ?open-hand-grasp-poses))
                    (goal ?goal))))))
 
   (roslisp:ros-info (pick-place pick-up) "Gripping")
 
   (cpl:par
-    (let ((?goal `(cpoe:object-in-hand ,?object :right)))
+    (let ((?goal `(cpoe:object-in-hand ,?object ?bottle-hand)))
       (exe:perform
        (desig:an action
                  (type gripping)
-                 (gripper :right)
+                 (gripper ?bottle-hand)
                  (effort ?grip-effort)
                  (object ?object)
                  (grasp ?grasp)
                  (goal ?goal))))
-
-    (unless (eq ?left-gripper-opening 0.0)
-      (let ((?goal `(cpoe:object-in-hand ,?object-cap :left)))
+    (unless (eq ?open-hand-gripper-opening 0.0)
+      (let ((?goal `(cpoe:object-in-hand ,?object-cap ?open-hand)))
         (exe:perform
          (desig:an action
                    (type gripping)
-                   (gripper :left)
+                   (gripper ?open-hand)
                    (effort ?grip-effort)
                    (object ?object-cap)
                    (grasp ?grasp)
-                   (goal ?goal))))))
+                   (goal ?goal)))));;)
   
   ;; (exe:perform
   ;;  (desig:an action
@@ -110,19 +122,23 @@
   ;;            (right-poses ?right-approach-poses)
   ;;            (desig:when ?collision-mode
   ;;              (collision-mode ?collision-mode))))
-  ;;(print "lllllllllllllllllll")
-  ;;(break)
+  ;; (print "lllllllllllllllllll")
+  ;; (break)
  
   (mapc
-   (lambda (?current-pre-left-open-poses)
-     (let ((?poses `(,?current-pre-left-open-poses)))
+   (lambda (?current-open-hand-pre-open-poses)
+     (let ((?poses `(,?current-open-hand-pre-open-poses)))
        (exe:perform
         (desig:an action
                   (type approaching)
-                  (left-poses ?poses)
+                  (when (eql ?open-hand :right)
+                    (right-poses ?poses))
+                  (when (eql ?open-hand :left)
+                    (left-poses ?poses))
                   (desig:when ?collision-mode
                     (collision-mode ?collision-mode))))))
-   ?left-pre-open-poses)
+   ?open-hand-pre-open-poses))
+  (break)
   (btr:detach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
                      (btr:object btr:*current-bullet-world* :milkbottlecap-1))
 
@@ -147,15 +163,18 @@
   ;; (btr:attach-object (btr:object btr:*current-bullet-world* :caplifter-1)
   ;;                    (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1))
   (mapc
-   (lambda (?current-left-open-poses)
-     (let ((?poses `(,?current-left-open-poses)))
+   (lambda (?current-open-hand-open-poses)
+     (let ((?poses `(,?current-open-hand-open-poses)))
        (exe:perform
         (desig:an action
                   (type approaching)
-                  (left-poses ?poses)
+                  (when (eql ?open-hand :right)
+                    (right-poses ?poses))
+                  (when (eql ?open-hand :left)
+                    (left-poses ?poses))
                   (desig:when ?collision-mode
                     (collision-mode ?collision-mode))))))
-   ?left-open-poses)
+   ?open-hand-open-poses)
   ;;(exe:perform (desig:an action (type opening-gripper) (gripper (left))))
   )
 

@@ -169,10 +169,6 @@
                   (:beer-tall :caplifter-1))))
 
       (case ?type
-        (:electric-corkscrew (btr-utils:spawn-object ?name ?type
-                                                     :pose (cl-transforms:make-pose
-                                                            (cl-tf:make-3d-vector 1.4d0 0.65d0 0.925)
-                                                            (cl-tf:make-quaternion 0 0 1 0))))
         (t (btr-utils:spawn-object ?name ?type
                                    :pose (cl-transforms:make-pose
                                           (cl-tf:make-3d-vector 1.4d0 0.65d0 0.89)
@@ -195,7 +191,8 @@
                                (type picking-up)
                                (object ?perceived-object)
                                (arm (:left)) 
-                               (grasp :top))))));;)
+                               (grasp :top))))
+      (park-robot)));;)
 
 (defun start (object)
   ;; (btr-utils:spawn-object 'milk-1 :milk
@@ -265,7 +262,7 @@
           ;;                        (object ?perceived-object)))
           (exe:perform
            (desig:an action
-                     (type 2hand-bottle)
+                     (type opening-bottle)
                      (object ?perceived-object)
                      (when ?perceived-object-cap
                        (object-cap ?perceived-object-cap)))))))))

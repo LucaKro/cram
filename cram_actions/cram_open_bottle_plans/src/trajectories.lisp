@@ -32,13 +32,13 @@
 (in-package :ob-plans)
 
 (defmethod man-int:get-action-trajectory :heuristics 20 ((action-type (eql :open-bottle))
-                                                         (arm (eql :left))
+                                                         arm
                                                          grasp
                                                          location
                                                          objects-acted-on
-                                                         &key tilt-angle side)
+                                                         &key)
 
-  (print "this is in pouring trajectories")
+  (print "this is in bottle opening trajectories")
   (let* ((side :top)
          (target-object
            objects-acted-on)
@@ -109,12 +109,12 @@
               ,opening-poses))))
 
 
-(defmethod man-int:get-action-trajectory :heuristics 20 ((action-type (eql :open-bottle))
-                                                 (arm (eql :right))
-                                                 grasp
-                                                 location
-                                                 objects-acted-on
-                                                 &key)
+(defmethod man-int:get-action-trajectory :heuristics 20 ((action-type (eql :hold-bottle))
+                                                         arm
+                                                         grasp
+                                                         location
+                                                         objects-acted-on
+                                                         &key)
 
   (let* ((object
            objects-acted-on)
@@ -170,7 +170,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; by hand ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod get-object-type-robot-frame-open-approach-transform ((object-type (eql :removed-by-hand)) name (arm (eql :left)) (grasp (eql :top)))
+(defmethod get-object-type-robot-frame-open-approach-transform ((object-type (eql :removed-by-hand)) name arm (grasp (eql :top)))
   
   (let* ((z (cl-transforms:z
              (cl-bullet::bounding-box-dimensions
@@ -215,7 +215,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,, caplifter ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod get-object-type-robot-frame-open-approach-transform ((object-type (eql :removed-by-caplifter)) name (arm (eql :left)) (grasp (eql :top)))
+(defmethod get-object-type-robot-frame-open-approach-transform ((object-type (eql :removed-by-caplifter)) name arm (grasp (eql :top)))
 
   (let* ((rot (cl-tf:make-quaternion  0.37 0.37 -0.603 0.603))
          (obj-radius (cl-transforms:x
@@ -278,7 +278,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; cork ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod get-object-type-robot-frame-open-approach-transform ((object-type (eql :removed-by-corkscrew)) name (arm (eql :left)) (grasp (eql :top)))
+(defmethod get-object-type-robot-frame-open-approach-transform ((object-type (eql :removed-by-corkscrew)) name arm (grasp (eql :top)))
 
   (let* ((z (cl-transforms:z
              (cl-bullet::bounding-box-dimensions

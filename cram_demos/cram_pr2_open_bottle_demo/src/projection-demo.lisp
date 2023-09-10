@@ -168,6 +168,8 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
                                   (cdr (assoc object-type spawning-poses-absolute))))
                             ;; rotate new pose randomly around Z
                             (rotated-object-pose
+                              ;; (cl-tf:copy-pose object-pose
+                              ;;                  :orientation (cl-tf:make-quaternion 2.5532854488119483d-4 4.2409435263834894d-4 0.687849760055542d0 0.7258529663085938d0))))
                               (cram-tf:rotate-pose object-pose
                                                    :z (/ (* 2 pi) (random 10.0)))))
 
