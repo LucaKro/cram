@@ -154,19 +154,19 @@
    (cl-transforms:make-3d-vector 1.25d0 0d0 0d0)
    (cl-transforms:make-quaternion 0.0d0 0.0d0 0.8d0 0.0d0)))
 
-(defun pickup-opener (object)
+(defun pickup-opener (?type ?name)
   
   ;; (urdf-proj:with-simulated-robot
     ;; (btr-utils:kill-all-objects)
     ;; (park-robot)
-    (let((?type (case object
-                  (:wine :corkscrew)
-                  (:beer :caplifter)
-                  (:beer-tall :caplifter)))
-         (?name (case object
-                  (:wine :corkscrew-1)
-                  (:beer :caplifter-1)
-                  (:beer-tall :caplifter-1))))
+    ;; (let((?type (case object
+    ;;               (:wine :corkscrew)
+    ;;               (:beer :caplifter)
+    ;;               (:beer-tall :caplifter)))
+    ;;      (?name (case object
+    ;;               (:wine :corkscrew-1)
+    ;;               (:beer :caplifter-1)
+    ;;               (:beer-tall :caplifter-1))))
 
       (case ?type
         (t (btr-utils:spawn-object ?name ?type
@@ -190,9 +190,9 @@
         (exe:perform (desig:an action
                                (type picking-up)
                                (object ?perceived-object)
-                               (arm (:left)) 
+                               (arm (:right)) 
                                (grasp :top))))
-      (park-robot)));;)
+      (park-robot));;))
 
 (defun start (object)
   ;; (btr-utils:spawn-object 'milk-1 :milk
@@ -208,23 +208,6 @@
                                                  (:beer-tall '(:beerbottle-tall :caplifter))))
   (urdf-proj:with-simulated-robot
     (park-robot)
-    (when (or (eq object :wine)
-              (eq object :beer)
-              (eq object :beer-tall))
-      (pickup-opener object))
-    (let ((?navigation-goal *base-pose-bottle*))
-      (exe:perform (desig:an action
-                             (type going)
-                             (target (desig:a location 
-                                              (pose ?navigation-goal))))))
-    
-    (let ((?looking-direction *bottle-location-pose*))
-      (exe:perform (desig:an action 
-                             (type looking)
-                             (target (desig:a location 
-                                              (pose ?looking-direction))))))
-
-
     (let* ((?type (case object
                      (:wine :winebottle)
                      (:milk :milkbottle)
@@ -239,31 +222,64 @@
                         (:juice :albihimbeerjuicecap)
                         (:beer :beerbottlecap)
                         (:beer-tall :beerbottlecap-tall)))
-           (?perceived-object (urdf-proj::detect (desig:an object (type ?type))))
-           (?perceived-object-cap (when ?cap-type
-                                    (urdf-proj::detect (desig:an object (type ?cap-type)))))
-          )
-      (cpl:with-retry-counters ((grasping-retry 3))
-        (cpl:with-failure-handling
-            ((common-fail:low-level-failure
-                 (e)
-               (declare (ignore e))
-               (cpl:do-retry grasping-retry
-                 (cpl:retry))
-               (roslisp:ros-warn (open-bottle grasping-fail)
-                                 "~%No more retries~%")))
-          ;; (exe:perform (desig:an action
-          ;;                        (type holding);; cram-holding)
-          ;;                        (arm  (:right)) ;;?grasping-arm)
-          ;;                        (object ?perceived-object)))
-          ;; (exe:perform (desig:an action
-          ;;                        (type cram-holding)
-          ;;                        (arm ?grasping-arm)
-          ;;                        (object ?perceived-object)))
-          (exe:perform
-           (desig:an action
-                     (type opening-bottle)
-                     (object ?perceived-object)
-                     (when ?perceived-object-cap
-                       (object-cap ?perceived-object-cap)))))))))
+           (?tool-type (case object
+                         (:wine :corkscrew)
+                         (:beer :caplifter)
+                         (:beer-tall :caplifter)
+                         (t nil)))
+           (?tool-name (case object
+                         (:wine :corkscrew-1)
+                         (:beer :caplifter-1)
+                         (:beer-tall :caplifter-1)
+                         (t nil))))
       
+      (when (or (eq object :wine)
+                (eq object :beer)
+                (eq object :beer-tall))
+        (pickup-opener ?tool-type ?tool-name))
+      (let ((?navigation-goal *base-pose-bottle*))
+        (exe:perform (desig:an action
+                               (type going)
+                               (target (desig:a location 
+                                                (pose ?navigation-goal))))))
+      
+      (let ((?looking-direction *bottle-location-pose*))
+        (exe:perform (desig:an action 
+                               (type looking)
+                               (target (desig:a location 
+                                                (pose ?looking-direction))))))
+
+
+      (let* ((?perceived-object (urdf-proj::detect (desig:an object (type ?type))))
+             (?perceived-object-cap (when ?cap-type
+                                      (urdf-proj::detect (desig:an object (type ?cap-type))))))
+        (cpl:with-retry-counters ((grasping-retry 3))
+          (cpl:with-failure-handling
+              ((common-fail:low-level-failure
+                   (e)
+                 (declare (ignore e))
+                 (cpl:do-retry grasping-retry
+                   (cpl:retry))
+                 (roslisp:ros-warn (open-bottle grasping-fail)
+                                   "~%No more retries~%")))
+            ;; (exe:perform (desig:an action
+            ;;                        (type holding);; cram-holding)
+            ;;                        (arm  (:right)) ;;?grasping-arm)
+            ;;                        (object ?perceived-object)))
+            ;; (exe:perform (desig:an action
+            ;;                        (type cram-holding)
+            ;;                        (arm ?grasping-arm)
+            ;;                        (object ?perceived-object)))
+            (exe:perform
+             (desig:an action
+                       (type opening-bottle)
+                       (object ?perceived-object)
+                       (when ?perceived-object-cap
+                         (object-cap ?perceived-object-cap))
+                       (when ?tool-type
+                         (with-tool (desig:an object
+                                              (type ?tool-type)
+                                              (name ?tool-name))))
+                       (arm :left)
+                       ))))))))
+  

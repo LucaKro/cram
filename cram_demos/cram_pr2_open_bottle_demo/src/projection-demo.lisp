@@ -168,10 +168,10 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
                                   (cdr (assoc object-type spawning-poses-absolute))))
                             ;; rotate new pose randomly around Z
                             (rotated-object-pose
-                              ;; (cl-tf:copy-pose object-pose
-                              ;;                  :orientation (cl-tf:make-quaternion 2.5532854488119483d-4 4.2409435263834894d-4 0.687849760055542d0 0.7258529663085938d0))))
-                              (cram-tf:rotate-pose object-pose
-                                                   :z (/ (* 2 pi) (random 10.0)))))
+                              (cl-tf:copy-pose object-pose
+                                               :orientation (cl-tf:make-quaternion 0 0 1 0))))
+                              ;; (cram-tf:rotate-pose object-pose
+                              ;;                      :z (/ (* 2 pi) (random 10.0)))))
 
                        ;; move object to calculated pose on surface
                        (btr-utils:move-object object-name rotated-object-pose)
@@ -199,7 +199,9 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
         (btr-utils:spawn-object :milkbottlecap-1 :milkbottlecap
                                 :pose cap-pose)            
         (btr:attach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
-                           (btr:object btr:*current-bullet-world* :milkbottlecap-1))))
+                           (btr:object btr:*current-bullet-world* :milkbottlecap-1)
+                           :attachment-type :cap
+                           :loose t)))
 
     (when (btr:object btr:*current-bullet-world* :milkpack-1)
       (let* ((milk-map-transf (cram-tf:pose->transform-stamped "map" "milkpack_1" 0  (btr:object-pose :milkpack-1)))
@@ -209,7 +211,9 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
         (btr-utils:spawn-object :milkpackcap-1 :milkpackcap
                                 :pose cap-pose)            
         (btr:attach-object (btr:object btr:*current-bullet-world* :milkpack-1)
-                           (btr:object btr:*current-bullet-world* :milkpackcap-1))))
+                           (btr:object btr:*current-bullet-world* :milkpackcap-1)
+                           :attachment-type :cap
+                           :loose t)))
 
     (when (btr:object btr:*current-bullet-world* :winebottle-1)
       
@@ -220,7 +224,9 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
                                 :pose cork-pose)
         ;;(break)
         (btr:attach-object (btr:object btr:*current-bullet-world* :winebottle-1)
-                           (btr:object btr:*current-bullet-world* :cork-1))))
+                           (btr:object btr:*current-bullet-world* :cork-1)
+                           :attachment-type :cap
+                           :loose t)))
 
     (when (btr:object btr:*current-bullet-world* :beerbottle-1)
       
@@ -230,7 +236,9 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
         (btr-utils:spawn-object :beerbottlecap-1 :beerbottlecap
                                 :pose beer-pose)
         (btr:attach-object (btr:object btr:*current-bullet-world* :beerbottle-1)
-                           (btr:object btr:*current-bullet-world* :beerbottlecap-1))))
+                           (btr:object btr:*current-bullet-world* :beerbottlecap-1)
+                           :attachment-type :cap
+                           :loose t)))
 
     (when (btr:object btr:*current-bullet-world* :beerbottle-tall-1)
       
@@ -240,7 +248,9 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
         (btr-utils:spawn-object :beerbottlecap-tall-1 :beerbottlecap-tall
                                 :pose beer-pose)
         (btr:attach-object (btr:object btr:*current-bullet-world* :beerbottle-tall-1)
-                           (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1))))
+                           (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1)
+                           :attachment-type :cap
+                           :loose t)))
 
      (when (btr:object btr:*current-bullet-world* :albihimbeerjuice-1)
       
@@ -251,7 +261,9 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
         (btr-utils:spawn-object :albihimbeerjuicecap-1 :albihimbeerjuicecap
                                 :pose albi-pose)
         (btr:attach-object (btr:object btr:*current-bullet-world* :albihimbeerjuice-1)
-                           (btr:object btr:*current-bullet-world* :albihimbeerjuicecap-1))))
+                           (btr:object btr:*current-bullet-world* :albihimbeerjuicecap-1)
+                           :attachment-type :cap
+                           :loose t)))
     
     ;; return list of BTR objects
     objects))

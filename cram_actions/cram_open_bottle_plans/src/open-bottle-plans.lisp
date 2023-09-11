@@ -1,23 +1,22 @@
 (in-package :ob-plans)
 
 (defun open-bottle (&key
-                      ((:collision-mode ?collision-mode))
                       ((:object ?object))
                       ((:object-cap ?object-cap))
-                      ((:effort ?grip-effort))
-                      ((:bottle-hand-gripper-opening ?bottle-hand-gripper-opening))
-                      ((:open-hand-gripper-opening ?open-hand-gripper-opening))
-                      ((:bottle-hand-approach-poses ?bottle-hand-approach-poses))
-                      ((:bottle-hand-grasp-poses ?bottle-hand-grasp-poses))
-                      ((:open-hand-approach-poses ?open-hand-approach-poses))
-                      ((:open-hand-grasp-poses ?open-hand-grasp-poses))
-                      ((:open-hand-pre-open-poses ?open-hand-pre-open-poses))
-                      ((:open-hand-open-poses ?open-hand-open-poses))
+                      ((:tool ?tool))
                       ((:bottle-hand ?bottle-hand))
                       ((:open-hand ?open-hand))
                       ((:grasp ?grasp))
+                      ((:effort ?grip-effort))
+                      ((:bottle-hand-gripper-opening ?bottle-hand-gripper-opening))
+                      ((:open-hand-gripper-opening ?open-hand-gripper-opening))
+                      ((:bottle-hand-reach-poses ?bottle-hand-reach-poses))
+                      ((:bottle-hand-grasp-poses ?bottle-hand-grasp-poses))
+                      ((:open-hand-reach-poses ?open-hand-reach-poses))
+                      ((:open-hand-grasp-poses ?open-hand-grasp-poses))
+                      ((:open-hand-pre-open-poses ?open-hand-pre-open-poses))
+                      ((:open-hand-open-poses ?open-hand-open-poses))
                     &allow-other-keys)
-
   (cpl:par
     (roslisp:ros-info (pick-place pick-up) "Opening gripper and reaching")
     (let ((?goal-open-hand `(cpoe:gripper-joint-at ?open-hand ,?open-hand-gripper-opening))
@@ -42,25 +41,25 @@
            (return)))
       (cpl:par
         ;; this had to be done in parallel so as to specify 2 different objects as goals
-        (let ((?goal `(cpoe:tool-frames-at ,?bottle-hand-approach-poses)))
+        (let ((?goal `(cpoe:tool-frames-at ,?bottle-hand-reach-poses)))
           (exe:perform
            (desig:an action
                      (type reaching)
                      (object ?object)
                      (when (eql ?bottle-hand :right)
-                       (right-poses ?bottle-hand-approach-poses))
+                       (right-poses ?bottle-hand-reach-poses))
                      (when (eql ?bottle-hand :left)
-                       (left-poses ?bottle-hand-approach-poses))
+                       (left-poses ?bottle-hand-reach-poses))
                      (goal ?goal))))
-        (let ((?goal `(cpoe:tool-frames-at ,?open-hand-approach-poses)))
+        (let ((?goal `(cpoe:tool-frames-at ,?open-hand-reach-poses)))
           (exe:perform
            (desig:an action
                      (type reaching)
                      (object ?object-cap)
                      (when (eql ?open-hand :right)
-                       (right-poses ?open-hand-approach-poses))
+                       (right-poses ?open-hand-reach-poses))
                      (when (eql ?open-hand :left)
-                       (left-poses ?open-hand-approach-poses))
+                       (left-poses ?open-hand-reach-poses))
                      (goal ?goal)))))))
   (roslisp:ros-info (pick-place pick-up) "Grasping")
   (cpl:with-failure-handling
@@ -69,6 +68,7 @@
                            "Manipulation messed up: ~a~%Ignoring."
                            e)
          (return)))
+    (break)
     (cpl:par
       ;; this had to be done in parallel so as to specify 2 different objects as goals
       (let ((?goal `(cpoe:tool-frames-at ,?bottle-hand-grasp-poses)))
@@ -91,9 +91,8 @@
                    (when (eql ?open-hand :left)
                      (left-poses ?open-hand-grasp-poses))
                    (goal ?goal))))))
-
+  (break)
   (roslisp:ros-info (pick-place pick-up) "Gripping")
-
   (cpl:par
     (let ((?goal `(cpoe:object-in-hand ,?object ?bottle-hand)))
       (exe:perform
@@ -104,7 +103,7 @@
                  (object ?object)
                  (grasp ?grasp)
                  (goal ?goal))))
-    (unless (eq ?open-hand-gripper-opening 0.0)
+    (if (eql ?tool nil)
       (let ((?goal `(cpoe:object-in-hand ,?object-cap ?open-hand)))
         (exe:perform
          (desig:an action
@@ -113,68 +112,45 @@
                    (effort ?grip-effort)
                    (object ?object-cap)
                    (grasp ?grasp)
-                   (goal ?goal)))));;)
-  
-  ;; (exe:perform
-  ;;  (desig:an action
-  ;;            (type approaching)
-  ;;            (left-poses ?left-approach-poses)
-  ;;            (right-poses ?right-approach-poses)
-  ;;            (desig:when ?collision-mode
-  ;;              (collision-mode ?collision-mode))))
-  ;; (print "lllllllllllllllllll")
-  ;; (break)
- 
-  (mapc
-   (lambda (?current-open-hand-pre-open-poses)
-     (let ((?poses `(,?current-open-hand-pre-open-poses)))
-       (exe:perform
-        (desig:an action
-                  (type approaching)
-                  (when (eql ?open-hand :right)
-                    (right-poses ?poses))
-                  (when (eql ?open-hand :left)
-                    (left-poses ?poses))
-                  (desig:when ?collision-mode
-                    (collision-mode ?collision-mode))))))
-   ?open-hand-pre-open-poses))
+                   (goal ?goal))));;)
+
+      (let ((?goal `(cpoe:tool-frames-at ,(last ?open-hand-pre-open-poses))))
+        (exe:perform
+         (desig:an action
+                   (type fixating)
+                   (when (eql ?open-hand :right)
+                     (right-poses  ?open-hand-pre-open-poses))
+                   (when (eql ?open-hand :left)
+                     (left-poses  ?open-hand-pre-open-poses))
+                   (goal ?goal))))))
   (break)
-  (btr:detach-object (btr:object btr:*current-bullet-world* :milkbottle-1)
-                     (btr:object btr:*current-bullet-world* :milkbottlecap-1))
+  (when ?tool
+    (btr:attach-object (btr:object btr:*current-bullet-world*
+                                   (desig:desig-prop-value ?tool :name))
+                       (btr:object btr:*current-bullet-world*
+                                   (desig:desig-prop-value ?object-cap :name))))
+  ;; (mapc
+  ;;  (lambda (?current-open-hand-open-poses)
+  ;;    (let ((?poses `(,?current-open-hand-open-poses)))
+  ;;      (exe:perform
+  ;;       (desig:an action
+  ;;                 (type opening)
+  ;;                 (when (eql ?open-hand :right)
+  ;;                   (right-poses ?poses))
+  ;;                 (when (eql ?open-hand :left)
+  ;;                   (left-poses ?poses))))))
+  ;;  ?open-hand-open-poses)
 
-  (btr:detach-object (btr:object btr:*current-bullet-world* :milkpack-1)
-                     (btr:object btr:*current-bullet-world* :milkpackcap-1))
-
-  (btr:detach-object (btr:object btr:*current-bullet-world* :albihimbeerjuice-1)
-                     (btr:object btr:*current-bullet-world* :albihimbeerjuicecap-1))
-  
-  (btr:detach-object (btr:object btr:*current-bullet-world* :winebottle-1)
-                     (btr:object btr:*current-bullet-world* :cork-1))
-  (btr:attach-object (btr:object btr:*current-bullet-world* :corkscrew-1)
-                     (btr:object btr:*current-bullet-world* :cork-1))
-  
-  (btr:detach-object (btr:object btr:*current-bullet-world* :beerbottle-1)
-                     (btr:object btr:*current-bullet-world* :beerbottlecap-1))
-  (btr:attach-object (btr:object btr:*current-bullet-world* :caplifter-1)
-                     (btr:object btr:*current-bullet-world* :beerbottlecap-1))
-  
-  ;; (btr:detach-object (btr:object btr:*current-bullet-world* :beerbottle-tall-1)
-  ;;                    (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1))
-  ;; (btr:attach-object (btr:object btr:*current-bullet-world* :caplifter-1)
-  ;;                    (btr:object btr:*current-bullet-world* :beerbottlecap-tall-1))
-  (mapc
-   (lambda (?current-open-hand-open-poses)
-     (let ((?poses `(,?current-open-hand-open-poses)))
-       (exe:perform
+  (let ((?goal `(cpoe:tool-frames-at ,(last ?open-hand-open-poses))))
+    (exe:perform
         (desig:an action
-                  (type approaching)
+                  (type opening)
                   (when (eql ?open-hand :right)
-                    (right-poses ?poses))
+                    (right-poses ?open-hand-open-poses))
                   (when (eql ?open-hand :left)
-                    (left-poses ?poses))
-                  (desig:when ?collision-mode
-                    (collision-mode ?collision-mode))))))
-   ?open-hand-open-poses)
+                    (left-poses ?open-hand-open-poses))
+                  (goal ?goal))))
+
   ;;(exe:perform (desig:an action (type opening-gripper) (gripper (left))))
   )
 
@@ -184,8 +160,6 @@
     str))
 
 
-;; TODO
-;; find a way to lookup transform from map to base_footprint
 (defun get-object-lid (object)
   (let* ((bullet-obj (btr:object btr:*current-bullet-world* (desig:desig-prop-value object :name)))
          (bullet-cap (btr:object btr:*current-bullet-world* (car (car (btr:attached-objects bullet-obj))))) (?cap-type (car (btr:item-types bullet-cap)))

@@ -6,11 +6,13 @@
     (spec:property ?action-designator (:object ?object))
     
     (-> (spec:property ?action-designator (:object-cap ?object-cap))
-        (spec:property ?action-designator (:object-cap ?object-cap))
+        (true)
         (lisp-fun get-object-lid ?object ?object-cap))
 
-    ;; (and (format "WARNING: Please specify with an arm which ooooooooooooooooooooooooooooo")
-    ;;      (fail))
+    (-> (spec:property ?action-designator (:with-tool ?tool))
+        (true)
+        (equal ?tool nil))
+
     (spec:property ?object-cap (:type ?object-cap-type))
 
     (desig:current-designator ?object ?current-object-desig)
@@ -44,26 +46,27 @@
     (lisp-fun man-int:get-action-gripper-opening ?object-cap-type ?open-hand-gripper-opening)
     (lisp-fun man-int:get-action-gripper-opening ?object-type ?bottle-hand-gripper-opening)
     
-    (and (lisp-fun man-int:get-action-trajectory :open-bottle ?open-hand ?grasp T ?object-cap ?pose)
-         (lisp-fun man-int:get-traj-poses-by-label ?pose :open
-                   ?open-hand-open-poses)
-         (lisp-fun man-int:get-traj-poses-by-label ?pose :pre-open
+    (and (lisp-fun man-int:get-action-trajectory :open-bottle ?open-hand ?grasp T ?object-cap :tool ?tool
+                   ?open-hand-trajectory)
+         (lisp-fun man-int:get-traj-poses-by-label ?open-hand-trajectory :reach
+                   ?open-hand-reach-poses)
+         (lisp-fun man-int:get-traj-poses-by-label ?open-hand-trajectory :grasping
+                   ?open-hand-grasp-poses)
+         (lisp-fun man-int:get-traj-poses-by-label ?open-hand-trajectory :pre-open
                    ?open-hand-pre-open-poses)
-         (lisp-fun man-int:get-traj-poses-by-label ?pose :approach
-                   ?open-hand-approach-poses)
-         (lisp-fun man-int:get-traj-poses-by-label ?pose :grasping
-                   ?open-hand-grasp-poses))
+         (lisp-fun man-int:get-traj-poses-by-label ?open-hand-trajectory :open
+                   ?open-hand-open-poses))
     ;; (equal ?open-hand-open-poses nil)
     ;; (equal ?open-hand-pre-open-poses nil)
-    ;; (equal ?open-hand-approach-poses nil)
+    ;; (equal ?open-hand-reach-poses nil)
     ;; (equal ?open-hand-grasp-poses nil)
     ;; (equal ?bottle-hand-grasp-poses nil)
-    ;; (equal ?bottle-hand-approach-poses nil)
+    ;; (equal ?bottle-hand-reach-poses nil)
 
     (and (lisp-fun man-int:get-action-trajectory :hold-bottle ?bottle-hand ?grasp T ?object
                    ?bottle-hand-trajectory)
-         (lisp-fun man-int:get-traj-poses-by-label ?bottle-hand-trajectory :approach
-                   ?bottle-hand-approach-poses)
+         (lisp-fun man-int:get-traj-poses-by-label ?bottle-hand-trajectory :reach
+                   ?bottle-hand-reach-poses)
          (lisp-fun man-int:get-traj-poses-by-label ?bottle-hand-trajectory :grasping
                    ?bottle-hand-grasp-poses))
 
@@ -79,16 +82,16 @@
     (desig:designator :action ((:type :opening-bottle)
                                (:object ?current-object-desig)
                                (:object-cap ?object-cap)
-                               (:collision-mode ?collision-mode)
                                (:bottle-hand-gripper-opening ?bottle-hand-gripper-opening)
                                (:open-hand-gripper-opening ?open-hand-gripper-opening)
                                (:effort ?effort)
                                (:grasp ?grasp)
+                               (:tool ?tool)
                                (:bottle-hand ?bottle-hand)
                                (:open-hand ?open-hand)
-                               (:bottle-hand-approach-poses ?bottle-hand-approach-poses)
+                               (:bottle-hand-reach-poses ?bottle-hand-reach-poses)
                                (:bottle-hand-grasp-poses ?bottle-hand-grasp-poses)
-                               (:open-hand-approach-poses ?open-hand-approach-poses)
+                               (:open-hand-reach-poses ?open-hand-reach-poses)
                                (:open-hand-grasp-poses ?open-hand-grasp-poses)
                                (:open-hand-pre-open-poses ?open-hand-pre-open-poses)
                                (:open-hand-open-poses ?open-hand-open-poses))
