@@ -1089,7 +1089,7 @@
 (man-int:def-object-type-to-gripper-transforms :cork '(:left :right) :top
   :grasp-translation `(,(- *cork-top-grasp-x-offset*) 0.0d0 ,*cork-top-grasp-z-offset*)
   :grasp-rot-matrix man-int:*z-across-y-grasp-rotation*
-  :pregrasp-offsets *lift-offset*
+  :pregrasp-offsets `(0.0 0.0 0.03) ;; *lift-offset*
   :2nd-pregrasp-offsets *lift-offset*
   :lift-translation *lift-offset*
   :2nd-lift-translation *lift-offset*)
