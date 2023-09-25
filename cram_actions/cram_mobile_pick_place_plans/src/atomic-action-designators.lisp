@@ -68,6 +68,7 @@
     ;; we shouldn't move the base if we're getting something of our own back
     ;; or if we're putting something on our own back
     (-> (or (spec:property ?action-designator (:type :putting))
+            (spec:property ?action-designator (:type :opening))
             (and (or (spec:property ?action-designator (:type :reaching))
                      (spec:property ?action-designator (:type :grasping)))
                  (or (spec:property ?action-designator (:location ?location-designator))
@@ -84,12 +85,13 @@
   (<- (infer-fixed-torso ?action-designator ?fixed-torso)
     ;; when putting something at a location that is always reachable,
     ;; like on our own back don't move the torso.
-    (-> (and (or (spec:property ?action-designator (:type :putting))
-                 (spec:property ?action-designator (:type :reaching)))
-             (or (and (spec:property ?action-designator (:location ?location-designator))
-                      (man-int:location-always-reachable ?location-designator))
-                 (and (spec:property ?action-designator (:supporting-object ?supporting-object))
-                      (man-int:location-always-reachable ?supporting-object))))
+    (-> (or ;;(spec:property ?action-designator (:type :opening))
+            (and (or (spec:property ?action-designator (:type :putting))
+                     (spec:property ?action-designator (:type :reaching)))
+                 (or (and (spec:property ?action-designator (:location ?location-designator))
+                          (man-int:location-always-reachable ?location-designator))
+                     (and (spec:property ?action-designator (:supporting-object ?supporting-object))
+                          (man-int:location-always-reachable ?supporting-object)))))
         (equal ?fixed-torso T)
         (equal ?fixed-torso NIL)))
 
