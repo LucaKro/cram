@@ -83,6 +83,21 @@
                  (type going)
                  (target (desig:a location (pose ?pose))))))))
 
+(defun park-arms ()
+  (cpl:with-failure-handling
+      ((cpl:plan-failure (e)
+         (declare (ignore e))
+         (return)))
+    (exe:perform
+     (desig:an action
+               (type moving-torso)
+               (joint-angle upper-limit)))
+      (exe:perform
+       (desig:an action
+                 (type positioning-arm)
+                 (left-configuration park)
+                 (right-configuration park)))))
+
 ;; (defun start-logging ()
 ;;   (ccl::start-episode))
 
@@ -171,7 +186,7 @@
       (case ?type
         (t (btr-utils:spawn-object ?name ?type
                                    :pose (cl-transforms:make-pose
-                                          (cl-tf:make-3d-vector 1.4d0 0.65d0 0.89)
+                                          (cl-tf:make-3d-vector 1.4d0 0.75d0 0.89)
                                           (cl-tf:make-identity-rotation)))))
       
       (let ((?navigation-goal *base-pose-bottle*))
@@ -190,7 +205,7 @@
         (exe:perform (desig:an action
                                (type picking-up)
                                (object ?perceived-object)
-                               (arm (:right)) 
+                               (arm (:left)) 
                                (grasp :top))))
       (park-robot));;))
 
@@ -206,6 +221,7 @@
                                                  (:juice '(:albihimbeerjuice))
                                                  (:beer '(:beerbottle :caplifter))
                                                  (:beer-tall '(:beerbottle-tall :caplifter))))
+  ;;(break)
   (urdf-proj:with-simulated-robot
     (park-robot)
     (let* ((?type (case object
@@ -232,7 +248,6 @@
                          (:beer :caplifter-1)
                          (:beer-tall :caplifter-1)
                          (t nil))))
-      
       (when (or (eq object :wine)
                 (eq object :beer)
                 (eq object :beer-tall))
@@ -280,6 +295,172 @@
                          (with-tool (desig:an object
                                               (type ?tool-type)
                                               (name ?tool-name))))
-                       (arm :left)
+                       (arm :right)
                        ))))))))
   
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Szenarios
+
+(defparameter *scenario-counter-pose1*
+  (cl-transforms-stamped:make-pose-stamped
+   "base_footprint" 0.0
+   (cl-transforms:make-3d-vector -0.15d0 2d0 0d0)
+   (cl-transforms:make-quaternion 0d0 0.0d0 1d0 0d0)))
+
+(defparameter *scenario-counter-pose1-1*
+  (cl-transforms-stamped:make-pose-stamped
+   "base_footprint" 0.0
+   (cl-transforms:make-3d-vector -2.5d0 0.2d0 0d0)
+   (cl-transforms:make-quaternion 0d0 0.0d0 1d0 0d0)))
+
+(defparameter *scenario-counter-pose2*
+  (cl-transforms-stamped:make-pose-stamped
+   "base_footprint" 0.0
+   (cl-transforms:make-3d-vector -2.5d0 0.5d0 0d0)
+   (cl-transforms:make-quaternion 0d0 0.0d0 1d0 0d0)))
+
+(defparameter *scenario-counter-pose3*
+  (cl-transforms-stamped:make-pose-stamped
+   "base_footprint" 0.0
+   (cl-transforms:make-3d-vector -2d0 1d0 0d0)
+   (cl-transforms:make-quaternion 0d0 0.0d0 0d0 1d0)))
+
+(defparameter *scenario-table-pose1*
+  (cl-transforms-stamped:make-pose-stamped
+   "base_footprint" 0.0
+   (cl-transforms:make-3d-vector -2.5d0 0.0d0 0d0)
+   (cl-transforms:make-quaternion 0d0 0.0d0 1d0 0d0)))
+
+
+
+(defun scenario-island ()
+  (park-robot)
+  (spawn-objects-on-sink-counter :spawning-poses-relative *scene2-spawning-poses*)
+  ;; (let ((?looking-direction (cl-transforms-stamped:make-pose-stamped
+  ;;                            "map" 0.0
+  ;;                            (cl-transforms:make-3d-vector -3.1d0 0.5d0 0.8d0)
+  ;;                            (cl-transforms:make-quaternion 0d0 0.0d0 1d0 0d0)))
+  ;;       (?going-pose *scenario-counter-pose2*)
+  ;;       (?going-pose2 *scenario-counter-pose1-1*)
+  ;;       )
+
+  ;;   (exe:perform (desig:an action 
+  ;;                          (type going)
+  ;;                          (target (desig:a location 
+  ;;                                           (pose ?going-pose)))))
+  ;;   (exe:perform (desig:an action 
+  ;;                          (type looking)
+  ;;                          (target (desig:a location 
+  ;;                                           (pose ?looking-direction)))))
+  ;;   (btr-utils:spawn-object :caplifter-1 :caplifter
+  ;;                           :pose (cl-transforms:make-pose
+  ;;                                  (cl-tf:make-3d-vector -3.1d0 0.5d0 0.8)
+  ;;                                  (cl-tf:make-quaternion 0 0 1 0)))
+  ;;   (let* ((?perceived-object (urdf-proj::detect (desig:an object (type :caplifter)))))
+  ;;     (exe:perform (desig:an action
+  ;;                            (type picking-up)
+  ;;                            (object ?perceived-object)
+  ;;                            (arm (:left)) 
+  ;;                            (grasp :top))))
+  ;;   (park-arms)
+  ;;   (exe:perform (desig:an action 
+  ;;                          (type going)
+  ;;                          (target (desig:a location 
+  ;;                                           (pose ?going-pose2)))))
+  ;;   (let ((?pose (cl-tf:pose->pose-stamped "map" 0 (btr:pose (btr:object btr:*current-bullet-world* :beerbottle-tall-1)))))
+  ;;     (exe:perform (desig:an action 
+  ;;                            (type looking)
+  ;;                            (target (desig:a location
+  ;;                                             (pose ?pose)))))))
+  ;; (let* ((?perceived-object (urdf-proj::detect (desig:an object (type :beerbottle-tall))))
+  ;;        (?perceived-object-cap (urdf-proj::detect (desig:an object (type :beerbottlecap-tall))))
+  ;;        )
+  ;;   (cpl:with-retry-counters ((grasping-retry 3))
+  ;;     (cpl:with-failure-handling
+  ;;         ((common-fail:low-level-failure
+  ;;              (e)
+  ;;            (declare (ignore e))
+  ;;            (cpl:do-retry grasping-retry
+  ;;              (cpl:retry))
+  ;;            (roslisp:ros-warn (open-bottle grasping-fail)
+  ;;                              "~%No more retries~%")))
+  ;;       (exe:perform
+  ;;        (desig:an action
+  ;;                  (type opening-bottle)
+  ;;                  (object ?perceived-object)
+  ;;                  (object-cap ?perceived-object-cap)
+  ;;                  (with-tool (desig:an object
+  ;;                                       (type :caplifter)
+  ;;                                       (name :caplifter-1)))
+  ;;                  (arm :right)
+  ;;                  )))))
+  ;; (break)
+
+  ;; (let ((?looking-direction (cl-transforms-stamped:make-pose-stamped
+  ;;                            "map" 0.0
+  ;;                            (cl-transforms:make-3d-vector -0.892d0 0.6d0 0.956d0)
+  ;;                            (cl-transforms:make-quaternion 0d0 0.0d0 1d0 0d0)))
+  ;;       (?going-pose *scenario-counter-pose2*))
+  ;;   (exe:perform (desig:an action 
+  ;;                          (type going)
+  ;;                          (target (desig:a location 
+  ;;                                           (pose ?going-pose)))))
+  ;;   (exe:perform (desig:an action 
+  ;;                          (type looking)
+  ;;                          (target (desig:a location 
+  ;;                                           (pose ?looking-direction))))))
+  ;; (let* ((?perceived-object (urdf-proj::detect (desig:an object (type :milkbottle))))
+  ;;        (?perceived-object-cap (urdf-proj::detect (desig:an object (type :milkbottlecap)))))
+  ;;   (cpl:with-retry-counters ((grasping-retry 3))
+  ;;     (cpl:with-failure-handling
+  ;;         ((common-fail:low-level-failure
+  ;;              (e)
+  ;;            (declare (ignore e))
+  ;;            (cpl:do-retry grasping-retry
+  ;;              (cpl:retry))
+  ;;            (roslisp:ros-warn (open-bottle grasping-fail)
+  ;;                              "~%No more retries~%")))
+  ;;       (exe:perform
+  ;;        (desig:an action
+  ;;                  (type opening-bottle)
+  ;;                  (object ?perceived-object)
+  ;;                  (object-cap ?perceived-object-cap)
+  ;;                  (arm :right)
+  ;;                  )))))
+
+  ;; (break)
+  (let ((?looking-direction (cl-tf:pose->pose-stamped
+                             "map" 0
+                             (btr:pose (btr:object btr:*current-bullet-world* :albihimbeerjuice-1))))
+        (?going-pose *scenario-counter-pose2*))
+    (exe:perform (desig:an action 
+                           (type going)
+                           (target (desig:a location 
+                                            (pose ?going-pose)))))
+    (exe:perform (desig:an action 
+                           (type looking)
+                           (target (desig:a location 
+                                            (pose ?looking-direction))))))
+  (let* ((?perceived-object (urdf-proj::detect (desig:an object (type :albihimbeerjuice))))
+         (?perceived-object-cap (urdf-proj::detect (desig:an object (type :albihimbeerjuicecap)))))
+    ;;(print ?perceived-object-cap)
+    ;;(break)
+    (cpl:with-retry-counters ((grasping-retry 3))
+      (cpl:with-failure-handling
+          ((common-fail:low-level-failure
+               (e)
+             (declare (ignore e))
+             (cpl:do-retry grasping-retry
+               (cpl:retry))
+             (roslisp:ros-warn (open-bottle grasping-fail)
+                               "~%No more retries~%")))
+        (exe:perform
+         (desig:an action
+                   (type opening-bottle)
+                   (object ?perceived-object)
+                   (object-cap ?perceived-object-cap)
+                   (arm :right)
+                   ))))))

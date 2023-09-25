@@ -37,16 +37,38 @@
      (:spoon . ((0.15 -0.4 -0.05) (0 0 0 1)))
      (:milk . ((0.17 -0.35 0.1) (0 0 0 1)))
      (:milkbottle . ((0.17 -0.15 0.1) (0 0 0 1)))
-     (:milkpack . ((0.17 -0.15 0.1) (0 0 0 1)))
+     (:milkpack . ((0.17 -0.15 0.1) (0 0 1 0)))
      (:winebottle . ((0.17 -0.15 0.1) (0 0 0 1)))
      (:corkscrew . ((0.17 -0.35 0.1) (0 0 0 1)))
-     (:electric-corkscrew . ((0.17 -0.35 0.1) (0 0 1 0)))
-     (:caplifter . ((0.17 -0.35 0.1) (0 0 0 1)))
+     (:caplifter . ((0.17 -0.45 0.1) (0 0 0 1)))
      (:beerbottle . ((0.17 -0.15 0.1) (0 0 0 1)))
-     (:beerbottle-tall . ((0.17 -0.15 0.1) (0 0 0 1)))
+     (:beerbottle-tall . ((0.17 -0.3 0.1) (0 0 -0.5 0.5)))
      (:albihimbeerjuice . ((0.17 -0.15 0.1) (0 0 0 1)))))
   "Relative poses on sink area")
 
+(defparameter *scene1-spawning-poses*
+  '("kitchen_island_surface"
+    ((:milkbottle . ((0.17 -1.15 0.1) (0 0 -0.5 0.5)))
+     (:milkpack . ((-0.25 -0.75 0.1) (0 0 1 0)))
+     (:winebottle . ((-0.25 -0.15 0.1) (0 0 0 1)))
+     (:corkscrew . ((0.17 -0.35 0.1) (0 0 0 1)))
+     (:caplifter . ((0.25 0 0.1) (0 0 1 0)))
+     (:beerbottle . ((0.3 -0.2 0.1) (0 0 -0.5 0.5)))
+     (:beerbottle-tall . ((0.25 0.25 0.1) (0 0 0 1)))
+     (:albihimbeerjuice . ((0.25 -0.75 0.1) (0 0 0 1)))))
+  "Relative poses on sink area")
+
+(defparameter *scene2-spawning-poses*
+  '("dining_area_jokkmokk_table_main"
+    ((:milkbottle . ((0.0 -5 0.0) (0 0 0 1)))
+     (:milkpack . ((0.4 -0.25 0.5) (0 0 1 0)))
+     (:beerbottle-tall . ((0 -0.3 0.5) (0 0 -0.5 0.5)))
+     (:corkscrew . ((0.2 -0.3 0.7) (0 0 0 1)))
+     (:caplifter . ((0.17 -0.35 0.1) (0 0 0 1)))
+     (:beerbottle . ((-0.4 -0.25 0.5) (0 0 0 1)))
+     (:winebottle . ((0 -0.3 0.5) (0 0 0 1)))
+     (:albihimbeerjuice . ((0.0 -0.3 0.5) (0 0 -0.5 0.5)))))
+  "Relative poses on sink area")
 
 (defparameter *object-placing-poses*
   '((:breakfast-cereal . ((-0.78 0.9 0.95) (0 0 1 0)))
@@ -113,7 +135,14 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
                                                         ;; :bowl
                                                         ;; :spoon
                                                         ;; :milk
-                                                        :milkpack
+                                                        ;;:winebottle
+                                                        ;;:corkscrew
+                                                        ;;:milkbottle
+                                                        :albihimbeerjuice
+                                                        ;;:beerbottle
+                                                        ;;:beerbottle-tall
+                                                        ;;:milkpack
+                                                        ;;:caplifter
                                                         ))
                                         (spawning-poses-relative *object-spawning-poses*)
                                         (random NIL))
@@ -169,7 +198,9 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
                             ;; rotate new pose randomly around Z
                             (rotated-object-pose
                               (cl-tf:copy-pose object-pose
-                                               :orientation (cl-tf:make-quaternion 0 0 1 0))))
+                                               :orientation (cl-tf:orientation object-pose)
+                                               ;; (cl-tf:make-quaternion 0 0 1 0)
+                                               )))
                               ;; (cram-tf:rotate-pose object-pose
                               ;;                      :z (/ (* 2 pi) (random 10.0)))))
 
@@ -257,14 +288,17 @@ Converts these coordinates into CRAM-TF:*FIXED-FRAME* frame and returns a list i
 
        (let* ((albi-map-transf (cram-tf:pose->transform-stamped "map" "albihimbeerjuice_1" 0  (btr:object-pose :albihimbeerjuice-1)))
              (albi-cap-transf (cl-tf:make-transform-stamped "albihimbeerjuice_1" "albihimbeerjuice_1" 0 (cl-tf:make-3d-vector -0.015 -0.015 0.122) (cl-tf:make-identity-rotation)))
-             (albi-pose (cram-tf:apply-transform albi-map-transf albi-cap-transf :result-as-pose-or-transform :pose)))
+              (albi-pose (cram-tf:apply-transform albi-map-transf albi-cap-transf :result-as-pose-or-transform :pose)))
         (btr-utils:spawn-object :albihimbeerjuicecap-1 :albihimbeerjuicecap
                                 :pose albi-pose)
         (btr:attach-object (btr:object btr:*current-bullet-world* :albihimbeerjuice-1)
                            (btr:object btr:*current-bullet-world* :albihimbeerjuicecap-1)
                            :attachment-type :cap
                            :loose t)))
-    
+
+    ;; (btr:add-vis-axis-object (btr:pose (btr:object btr:*current-bullet-world* :milkpackcap-1))
+    ;;                          :length 0.1)
+    ;; (break)
     ;; return list of BTR objects
     objects))
 
