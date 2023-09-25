@@ -4,9 +4,10 @@
                       ((:object ?object))
                       ((:object-cap ?object-cap))
                       ((:tool ?tool))
+                      ((:bottle-hand-grasp ?bottle-hand-grasp))
                       ((:bottle-hand ?bottle-hand))
+                      ((:open-hand-grasp ?open-hand-grasp))                      
                       ((:open-hand ?open-hand))
-                      ((:grasp ?grasp))
                       ((:effort ?grip-effort))
                       ((:bottle-hand-gripper-opening ?bottle-hand-gripper-opening))
                       ((:open-hand-gripper-opening ?open-hand-gripper-opening))
@@ -68,7 +69,8 @@
                            "Manipulation messed up: ~a~%Ignoring."
                            e)
          (return)))
-    (break)
+    (print "reaching completed")
+    ;;(break)
     (cpl:par
       ;; this had to be done in parallel so as to specify 2 different objects as goals
       (let ((?goal `(cpoe:tool-frames-at ,?bottle-hand-grasp-poses)))
@@ -91,7 +93,7 @@
                    (when (eql ?open-hand :left)
                      (left-poses ?open-hand-grasp-poses))
                    (goal ?goal))))))
-  (break)
+  ;;(break)
   (roslisp:ros-info (pick-place pick-up) "Gripping")
   (cpl:par
     (let ((?goal `(cpoe:object-in-hand ,?object ?bottle-hand)))
@@ -101,7 +103,7 @@
                  (gripper ?bottle-hand)
                  (effort ?grip-effort)
                  (object ?object)
-                 (grasp ?grasp)
+                 (grasp ?bottle-hand-grasp)
                  (goal ?goal))))
     (if (eql ?tool nil)
       (let ((?goal `(cpoe:object-in-hand ,?object-cap ?open-hand)))
@@ -111,8 +113,8 @@
                    (gripper ?open-hand)
                    (effort ?grip-effort)
                    (object ?object-cap)
-                   (grasp ?grasp)
-                   (goal ?goal))));;)
+                   (grasp ?open-hand-grasp)
+                   (goal ?goal))))
 
       (let ((?goal `(cpoe:tool-frames-at ,(last ?open-hand-pre-open-poses))))
         (exe:perform
@@ -123,7 +125,7 @@
                    (when (eql ?open-hand :left)
                      (left-poses  ?open-hand-pre-open-poses))
                    (goal ?goal))))))
-  (break)
+  ;;(break)
   (when ?tool
     (btr:attach-object (btr:object btr:*current-bullet-world*
                                    (desig:desig-prop-value ?tool :name))
@@ -150,7 +152,6 @@
                   (when (eql ?open-hand :left)
                     (left-poses ?open-hand-open-poses))
                   (goal ?goal))))
-
   ;;(exe:perform (desig:an action (type opening-gripper) (gripper (left))))
   )
 

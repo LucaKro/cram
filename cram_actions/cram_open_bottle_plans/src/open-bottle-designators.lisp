@@ -29,24 +29,33 @@
     ;; (equal ?bottle-hand :left)
     
  
-    (lisp-fun man-int:get-object-transform ?current-object-desig ?object-transform)
-   
+    (lisp-fun man-int:get-object-transform ?current-object-desig ?bottle-transform)
+    (lisp-fun man-int:get-object-transform ?object-cap ?cap-transform)
+
     ;; infer missing information like ?grasp type, gripping ?maximum-effort, manipulation poses
-    (lisp-fun man-int:calculate-object-faces ?object-transform (?facing-robot-face ?bottom-face))
+    ;;(lisp-fun man-int:calculate-object-faces ?bottle-transform (?facing-robot-face ?bottom-face))
     (-> (man-int:object-rotationally-symmetric ?object-type)
-        (equal ?rotationally-symmetric t)
-        (equal ?rotationally-symmetric nil))
+        (equal ?bottle-rotationally-symmetric t)
+        (equal ?bottle-rotationally-symmetric nil))
+
+    (lisp-fun man-int:calculate-object-faces ?bottle-transform (?facing-robot-face ?bottom-face))
     
-    (-> (spec:property ?action-designator (:grasp ?grasp))
-        (true)
-        (and (lisp-fun man-int:get-action-grasps ?object-type ?bottle-hand ?object-transform ?grasps)
-             (member ?grasp ?grasps)))
+    (-> (man-int:object-rotationally-symmetric ?object-cap-type)
+        (equal ?cap-rotationally-symmetric t)
+        (equal ?cap-rotationally-symmetric nil))
+    
+    (and (lisp-fun man-int:get-action-grasps ?object-type ?bottle-hand ?bottle-transform ?bottle-hand-grasps)
+         (member ?bottle-hand-grasp ?bottle-hand-grasps))
+    
+    (and (lisp-fun man-int:get-action-grasps ?object-cap-type ?open-hand ?cap-transform ?open-hand-grasps)
+         (member ?open-hand-grasp ?open-hand-grasps))
     
     (lisp-fun man-int:get-action-gripping-effort ?object-type ?effort)
+    (lisp-fun man-int:get-action-gripping-effort ?object-cap-type ?cap-effort)
     (lisp-fun man-int:get-action-gripper-opening ?object-cap-type ?open-hand-gripper-opening)
     (lisp-fun man-int:get-action-gripper-opening ?object-type ?bottle-hand-gripper-opening)
     
-    (and (lisp-fun man-int:get-action-trajectory :open-bottle ?open-hand ?grasp T ?object-cap :tool ?tool
+    (and (lisp-fun man-int:get-action-trajectory :open-bottle ?open-hand ?open-hand-grasp T ?object-cap :tool ?tool
                    ?open-hand-trajectory)
          (lisp-fun man-int:get-traj-poses-by-label ?open-hand-trajectory :reach
                    ?open-hand-reach-poses)
@@ -55,7 +64,8 @@
          (lisp-fun man-int:get-traj-poses-by-label ?open-hand-trajectory :pre-open
                    ?open-hand-pre-open-poses)
          (lisp-fun man-int:get-traj-poses-by-label ?open-hand-trajectory :open
-                   ?open-hand-open-poses))
+                   ?open-hand-open-poses)
+         )
     ;; (equal ?open-hand-open-poses nil)
     ;; (equal ?open-hand-pre-open-poses nil)
     ;; (equal ?open-hand-reach-poses nil)
@@ -63,13 +73,14 @@
     ;; (equal ?bottle-hand-grasp-poses nil)
     ;; (equal ?bottle-hand-reach-poses nil)
 
-    (and (lisp-fun man-int:get-action-trajectory :hold-bottle ?bottle-hand ?grasp T ?object
+    (and (lisp-fun man-int:get-action-trajectory :hold-bottle ?bottle-hand ?facing-robot-face T ?object
                    ?bottle-hand-trajectory)
          (lisp-fun man-int:get-traj-poses-by-label ?bottle-hand-trajectory :reach
                    ?bottle-hand-reach-poses)
          (lisp-fun man-int:get-traj-poses-by-label ?bottle-hand-trajectory :grasping
                    ?bottle-hand-grasp-poses))
 
+    
     (-> (desig:desig-prop ?action-designator (:collision-mode ?collision-mode))
         (true)
         (equal ?collision-mode NIL))
@@ -85,10 +96,11 @@
                                (:bottle-hand-gripper-opening ?bottle-hand-gripper-opening)
                                (:open-hand-gripper-opening ?open-hand-gripper-opening)
                                (:effort ?effort)
-                               (:grasp ?grasp)
                                (:tool ?tool)
                                (:bottle-hand ?bottle-hand)
+                               (:bottle-hand-grasp ?bottle-hand-grasp)
                                (:open-hand ?open-hand)
+                               (:open-hand-grasp ?open-hand-grasp)
                                (:bottle-hand-reach-poses ?bottle-hand-reach-poses)
                                (:bottle-hand-grasp-poses ?bottle-hand-grasp-poses)
                                (:open-hand-reach-poses ?open-hand-reach-poses)

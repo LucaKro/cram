@@ -40,7 +40,7 @@
                                                            tool)
 
   (print "this is in bottle opening trajectories")
-  (let* ((grasp :top)
+  (let* ((grasp grasp)
          (object
            objects-acted-on)
          (object-name
@@ -52,77 +52,37 @@
          (bTo
            (man-int:get-object-transform object))
 
-         ;;;;vvvvvvvvv;;;;;;
-         (to-T-to-offset
-           (get-object-type-robot-frame-open-reach-transform
-            object-type object-name arm grasp tool-object-type))
          
          (oTg-std
            (man-int:get-object-type-to-gripper-transform
             object-type object-name arm grasp))
+         
          (oTg-pregrasps
            (man-int:get-object-type-to-gripper-pregrasp-transforms
             object-type object-name arm grasp location oTg-std))
-
-         (reach-pose
-           ;; (alexandria:curry #'man-int:calculate-gripper-pose-in-map
-           ;;  bTo arm oTg-pregrasps)
-           (cl-tf:copy-pose-stamped 
-            (man-int:calculate-gripper-pose-in-base
-              (cram-tf:apply-transform
-               (cram-tf:copy-transform-stamped 
-                to-T-to-offset
-                :rotation (cl-tf:rotation to-T-to-offset)) ;; (cl-tf:make-identity-rotation))
-               bTo)
-              arm (car oTg-pregrasps))
-            :orientation 
-            (cl-tf:rotation to-T-to-offset))
-            )
-
-         (grasp-pose
-           (cl-tf:copy-pose-stamped 
-            (man-int:calculate-gripper-pose-in-base
-              (cram-tf:apply-transform
-               (cram-tf:copy-transform-stamped 
-                to-T-to-offset
-                :rotation (cl-tf:make-identity-rotation))
-               bTo)
-              arm oTg-std)
-            :orientation 
-            (cl-tf:rotation to-T-to-offset)))
-         (pre-opening-poses
-           (calculate-pre-opening-trajectory object-type (list grasp-pose) object-name tool-object-type))
-         (opening-poses
-           (calculate-opening-trajectory object-type (copy-list pre-opening-poses) object-name tool-object-type)))
-    (print "Pose:")
-    (print reach-pose)
+         (pre-opening-transforms
+           (calculate-pre-opening-trajectory object-type (list oTg-std) object-name tool-object-type))
+         (opening-transforms
+           (calculate-opening-trajectory object-type (copy-list pre-opening-transforms) object-name tool-object-type))
+         )
+    (print "Transform:")
+    (print bTo)
     ;;(break)
-    (mapcar (lambda (label poses-in-base)
-              (man-int:make-traj-segment
+
+    (mapcar (lambda (label transforms)
+               (man-int:make-traj-segment
                :label label
-               :poses (mapcar 
-                       (lambda (pose-in-base)
-                         (let ((mTb (cram-tf:pose->transform-stamped
-                                     cram-tf:*fixed-frame*
-                                     cram-tf:*robot-base-frame*
-                                     0.0
-                                     (cram-tf:robot-current-pose)))
-                               (bTg-std
-                                 (cram-tf:pose-stamped->transform-stamped
-                                  pose-in-base
-                                  (cl-tf:child-frame-id bTo))))
-                           (cl-tf:ensure-pose-stamped
-                            (cram-tf:apply-transform mTb bTg-std))))
-                       poses-in-base)))
-            
-            `(:reach
+               :poses (mapcar (alexandria:curry #'man-int:calculate-gripper-pose-in-map bTo arm)
+                              transforms)))
+            '(:reach
               :grasping
               :pre-open
               :open)
-            `((,reach-pose)
-              (,grasp-pose)
-              ,pre-opening-poses
-              ,opening-poses))))
+            `(,oTg-pregrasps
+              (,oTg-std)
+              ,pre-opening-transforms
+              ,opening-transforms
+              ))))
 
 
 (defmethod man-int:get-action-trajectory :heuristics 20 ((action-type (eql :hold-bottle))
@@ -151,7 +111,7 @@
 
     
 
-    (mapcar (lambda (label transforms) 
+    (mapcar (lambda (label transforms)
               (man-int:make-traj-segment
                :label label
                :poses (mapcar (alexandria:curry #'man-int:calculate-gripper-pose-in-map bTo arm)
@@ -166,22 +126,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; generics ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defgeneric get-object-type-robot-frame-open-reach-transform (object-type name arm grasp tool)
-  (:documentation "Calculates the reach pose for the current opening action")
+  (:documentation "Calculates the reach transform for the current opening action")
   (:method (object-type name arm grasp tool)
     (man-int::call-with-specific-type #'get-object-type-robot-frame-open-reach-transform
                                       object-type name arm grasp tool)))
 
-(defgeneric calculate-pre-opening-trajectory (object-type init-pose name tool &optional angle)
-  (:documentation "Calculates the pre-opening pose for the current opening action")
-  (:method (object-type init-pose name tool &optional (angle (cram-math:degrees->radians 10)))
+(defgeneric calculate-pre-opening-trajectory (object-type init-transform name tool &optional angle)
+  (:documentation "Calculates the pre-opening transform for the current opening action")
+  (:method (object-type init-transform name tool &optional (angle (cram-math:degrees->radians 10)))
     (man-int::call-with-specific-type #'calculate-pre-opening-trajectory
-                                      object-type init-pose name tool angle)))
+                                      object-type init-transform name tool angle)))
 
-(defgeneric calculate-opening-trajectory (object-type init-pose name tool &optional angle)
-  (:documentation "Calculates the opening pose for the current opening action")
-  (:method (object-type init-pose name tool &optional (angle (cram-math:degrees->radians 10)))
+(defgeneric calculate-opening-trajectory (object-type init-transform name tool &optional angle)
+  (:documentation "Calculates the opening transform for the current opening action")
+  (:method (object-type init-transform name tool &optional (angle (cram-math:degrees->radians 10)))
     (man-int::call-with-specific-type #'calculate-opening-trajectory
-                                      object-type init-pose name tool angle)))
+                                      object-type init-transform name tool angle)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; by hand ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -193,39 +153,28 @@
               (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
          (std-transf (cl-transforms-stamped:make-transform-stamped
                       "map" "base_footprint" 0
-                      (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0)))
+                      (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 0 0 0 1)));;1 0 -1 0)))
          (obj-rot (cl-tf:make-transform-stamped "base_footprint" "base_footprint" 0 (cl-tf:make-3d-vector 0.0 0 0.0)
                                         (cl-tf:orientation (btr:pose  (btr:object btr:*current-bullet-world* name))))))
 
     (cram-tf:apply-transform obj-rot std-transf)))
 
-(defmethod calculate-pre-opening-trajectory ((object-type (eql :removed-by-hand)) init-pose name (tool (eql nil)) &optional (angle (cram-math:degrees->radians 10)))
-  init-pose)
+(defmethod calculate-pre-opening-trajectory ((object-type (eql :removed-by-hand)) init-transform name (tool (eql nil)) &optional (angle (cram-math:degrees->radians 10)))
+  init-transform)
 
-(defmethod calculate-opening-trajectory ((object-type (eql :removed-by-hand)) init-pose name (tool (eql nil)) &optional (angle (cram-math:degrees->radians 10)))
+(defmethod calculate-opening-trajectory ((object-type (eql :removed-by-hand)) init-transform name (tool (eql nil)) &optional (angle (cram-math:degrees->radians 10)))
   (let* ((times 36)
          (obj-height (cl-transforms:z
                       (cl-bullet::bounding-box-dimensions
                        (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
          (lift-offset (/ obj-height (* 2 times)))
-         (result init-pose)
-         (new-pose (cram-tf:apply-transform
-                    (cram-tf:pose-stamped->transform-stamped (car (last result)) "base_footprint")
-                    (cl-transforms-stamped:make-transform-stamped
-                      "map" "base_footprint" 0
-                      (cl-tf:make-3d-vector -0.1 0 0.0) (cl-tf:orientation (car (last result)))))))
-    
+         (result init-transform))
     (dotimes (n times)
-      (let* ((offset-transf (cram-tf:apply-transform
-                             (cram-tf:pose-stamped->transform-stamped (car (last result)) "base_footprint")
-                             (cl-transforms-stamped:make-transform-stamped
-                              "map" "base_footprint" 0
-                              (cl-tf:make-3d-vector (- lift-offset) 0 0.0) (cl-tf:orientation (car (last result))))))
-             (opening-pose (cl-tf:make-pose-stamped "base_footprint" 0
-                                                    (cl-tf:translation offset-transf)
-                                                    (cl-tf:orientation (cram-tf:rotate-pose-in-own-frame (car (last result)) :x  (- angle))))))
-                           ;;:z lift-offset)))
-        (push opening-pose (cdr (last result)))))
+      (let ((opening-transform (cram-tf:translate-transform-stamped
+                                (cram-tf:rotate-transform-in-own-frame (car (last result)) :z (- angle))
+                                :z-offset lift-offset)))
+
+        (push opening-transform (cdr (last result)))))
     result))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -242,52 +191,60 @@
      "map" "base_footprint" 0
      (cl-tf:make-3d-vector (- (+ 0.09 obj-radius)) 0 -0.135) rot)))
 
-(defmethod calculate-pre-opening-trajectory ((object-type (eql :removed-by-caplifter)) init-pose name (tool (eql :caplifter)) &optional (angle (cram-math:degrees->radians 10)))
-  (let* ((times 8)
-         (obj-radius (cl-transforms:x
-                      (cl-bullet::bounding-box-dimensions
-                       (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
-         (shift-offset (+ (/ obj-radius (* 2 times))))
-         (result (last init-pose)))
-    (dotimes (n (/ times 1))
-      (let ((opening-pose (cram-tf:translate-pose (car (last result)) :x (* 2 shift-offset))))
-        (push opening-pose (cdr (last result)))))
-    
-    result))
-
-(defmethod calculate-opening-trajectory ((object-type (eql :removed-by-caplifter)) init-pose name (tool (eql :caplifter)) &optional (angle (cram-math:degrees->radians 10)))
+(defmethod calculate-pre-opening-trajectory ((object-type (eql :removed-by-caplifter)) init-transform name (tool (eql :caplifter)) &optional (angle (cram-math:degrees->radians 10)))
   (let* ((times 10)
-         (obj-pose (btr:pose  (btr:object btr:*current-bullet-world* name)))
+         (result (last init-transform))
+         (gTo (cram-tf:transform-stamped-inv (car result)))
+         (new-transf (cram-tf:transform-stamped-inv
+                      (cram-tf:copy-transform-stamped gTo
+                                                      :translation (cl-tf:make-3d-vector 0 0.1 0)))))
+         
+    ;;(print obj-radius)
+
+    (interpolate-transform (car (last init-transform)) new-transf times))
+    
+    ;; (dotimes (n (/ times 1))
+    ;;   (let ((opening-pose (cram-tf:transform-stamped-inv
+    ;;                        (cram-tf:translate-transform-stamped gTo
+    ;;                                                             :x-offset (* 2 shift-offset)))))
+    ;;     (push opening-pose (cdr (last result)))))
+    
+    ;; result)
+  )
+
+(defmethod calculate-opening-trajectory ((object-type (eql :removed-by-caplifter)) init-transform name (tool (eql :caplifter)) &optional (angle (cram-math:degrees->radians 90)))
+  (let* ((times 10)
          (obj-height (cl-transforms:z
                       (cl-bullet::bounding-box-dimensions
                        (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
-         ;; (oTm (cram-tf:pose->transform-stamped
-         ;;       "beerobottlecap_1"
-         ;;       cram-tf:*fixed-frame*
-         ;;       0.0
-         ;;       obj-pose))
-         (mTb (cram-tf:pose->transform-stamped
-               cram-tf:*fixed-frame*
-               cram-tf:*robot-base-frame*
-               0.0
-               (btr:pose (btr:get-robot-object))))
-
-         (transf (lookup-transform-using-map
-                  obj-pose
-                  (cram-tf:apply-transform mTb (cram-tf:pose-stamped->transform-stamped (car init-pose) "beerbottlecap_1") :result-as-pose-or-transform :pose) "bottleopener_1" "beerbottlecap_1"))
-         
-
-         (new-pose (cl-tf:copy-pose-stamped
-                    (car init-pose)
-                    :origin (cl-tf:v+ (cl-tf:origin (car (last init-pose)))
-                                                    ;;(car init-pose))
-                                      (cl-tf:make-3d-vector 0
-                                                            ;;0
-                                                            0.005
-                                                            (+ (/ obj-height 2)
-                                                               (cl-tf:z (cl-tf:translation transf)))))
-                    :orientation (cl-tf:make-quaternion 0 0.707 0 0.707)))) ;; 0.5 0.5 -0.5 0.5))))
-    (interpolate-pose (car (last init-pose)) new-pose 10)))
+         (init-transform (car (last init-transform)))
+         (gTo (cram-tf:transform-stamped-inv init-transform))
+         (init-transform-transl (cl-tf:translation init-transform))
+         (axis (cond
+                 ((< (abs (cl-tf:x init-transform-transl))
+                     (abs (cl-tf:y init-transform-transl))) :x)
+                 ((> (abs (cl-tf:x init-transform-transl))
+                     (abs (cl-tf:y init-transform-transl))) :y)
+                 (t (error "Case not covered"))))
+                 
+         (sign (determine-sign init-transform-transl))
+         (angle (* sign (cram-math:degrees->radians 30)))
+         (new-transf (cram-tf:transform-stamped-inv
+                      (cram-tf:rotate-transform-in-own-frame
+                       (cram-tf:copy-transform-stamped gTo
+                                                       :translation (cl-tf:make-3d-vector 0 0.1 (/ obj-height 3))) 
+                      ;; (cram-tf:translate-transform-stamped gTo
+                      ;;                                                                     :y-offset -0.0323950855575664d0
+                      ;;                                                                     :z-offset (- (* obj-height 1.5)))
+                                                           ;; :x-offset 0.028
+                                                           ;; :z-offset 0.052)
+                       axis angle))))
+                                                 
+                    ;;:rotation (cl-tf:make-quaternion 0.707 -0.707 0 0))))
+    ;; 0.5 0.5 -0.5 0.5))))
+    ;; (print init-transform-transl)
+    ;; (break)
+    (interpolate-transform init-transform new-transf times)))
 
 
 
@@ -304,36 +261,48 @@
      "map" "base_footprint" 0
      (cl-tf:make-3d-vector 0.0 0 0.0) (cl-tf:make-quaternion 1 0 -1 0))))
 
-(defmethod calculate-pre-opening-trajectory ((object-type (eql :removed-by-corkscrew)) init-pose name (tool (eql :corkscrew)) &optional (angle (cram-math:degrees->radians 10)))
+(defmethod calculate-pre-opening-trajectory ((object-type (eql :removed-by-corkscrew)) init-transform name (tool (eql :corkscrew)) &optional (angle (cram-math:degrees->radians 10)))
   (let* ((times 36)
          (obj-height (cl-transforms:z
                       (cl-bullet::bounding-box-dimensions
                        (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
          (lift-offset (- (/ obj-height (* 2 times))))
-         (result init-pose))
+         (result init-transform))
     (dotimes (n times)
-      (let ((opening-pose (cram-tf:translate-pose
-                           (rotate-once-pose (car (last result)) (- angle) :z)
-                           :z lift-offset)))
+      (let ((opening-transform (cram-tf:translate-transform-stamped
+                           (cram-tf:rotate-transform-in-own-frame (car (last result)) :z  angle)
+                           :z-offset lift-offset)))
 
-        (push opening-pose (cdr (last result)))))
+        (push opening-transform (cdr (last result)))))
     
     result))
      
 
-(defmethod calculate-opening-trajectory ((object-type (eql :removed-by-corkscrew)) init-pose name (tool (eql :corkscrew)) &optional (angle (cram-math:degrees->radians 10)))
-  (let* ((times 36)
+(defmethod calculate-opening-trajectory ((object-type (eql :removed-by-corkscrew)) init-transform name (tool (eql :corkscrew)) &optional (angle (cram-math:degrees->radians 10)))
+  (let* ((times 18)
          (obj-height (cl-transforms:z
                       (cl-bullet::bounding-box-dimensions
                        (btr::aabb  (btr:object btr:*current-bullet-world* name)))))
-         (lift-offset (- (/ obj-height (* 2 times))))
-         (result (last init-pose)))
-    (dotimes (n (/ times 2))
-      (let ((opening-pose (cram-tf:translate-pose (car (last result)) :z (- (* 4 lift-offset)))))
-        (push opening-pose (cdr (last result)))))
-    
-    result))
+         (lift-offset (+ obj-height 0.01))
+         (result (last init-transform))
+         (end-transf (cram-tf:translate-transform-stamped (car result)
+                                                             :z-offset lift-offset)))
+    (interpolate-transform (car result) end-transf times)))
 
+;; (dotimes (n times)
+;;       (let ((opening-transform (cram-tf:translate-transform-stamped (car (last result))
+;;                                                                :z-offset (- lift-offset))))
+;;         (push opening-transform (cdr (last result)))))
+    
+;;     result))
+
+
+;; (new-transf (cram-tf:transform-stamped-inv
+;;                       (cram-tf:rotate-transform-in-own-frame
+;;                        (cram-tf:copy-transform-stamped gTo
+;;                                                        :translation (cl-tf:make-3d-vector 0 0.1 (/ obj-height 3)))
+;;                        axis angle))))
+;;     (interpolate-transform init-transform new-transf 10)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; other ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -393,6 +362,9 @@
                                      (/ 1 sin-theta)))))
     result))
 
+(defun lerp-p (p1 p2 t-val)
+  (cl-tf:v+ (cl-tf:v* p1 (- 1 t-val)) (cl-tf:v* p2 t-val)))
+
 (defun interpolate-pose (start-pose end-pose steps)
   (let (interp
         (step-size (/ 1.0 (- steps 1))))
@@ -405,6 +377,30 @@
                (unless (> t-val 1)
                  (push pose interp))))
     (reverse interp)))
+
+(defun interpolate-transform (start-transform end-transform steps)
+  (let (interp
+        (step-size (/ 1.0 (- steps 1)))
+        (parent (cl-tf:frame-id start-transform))
+        (child (cl-tf:child-frame-id start-transform))
+        (stamp (cl-tf:stamp start-transform)))
+    (loop for i from 0 to steps
+          do
+             (let* ((t-val (* i step-size))
+                    (transl (lerp-p (cl-tf:translation start-transform) (cl-tf:translation end-transform) t-val))
+                    (rot (slerp-q (cl-tf:rotation start-transform) (cl-tf:rotation end-transform) t-val))
+                    (transform (cl-tf:make-transform-stamped parent child stamp transl rot)))
+               (unless (> t-val 1)
+                 (push transform interp))))
+    (reverse interp)))
+
+(defun determine-sign (vec)
+  (let ((diff  (- (cl-tf:x vec)
+                  (cl-tf:y vec)
+                  (cl-tf:z vec))))
+    (cond
+      ((< diff 0) -1)
+      (t 1))))
 
 
 ;; @author 
